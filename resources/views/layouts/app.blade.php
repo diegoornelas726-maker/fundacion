@@ -21,6 +21,82 @@
             color: #e4e4e7;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ── Orbes animados de fondo ── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            z-index: 0;
+            animation: drift ease-in-out infinite alternate;
+        }
+
+        .orb-1 {
+            width: 580px; height: 580px;
+            background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 70%);
+            top: -220px; left: -160px;
+            animation-duration: 14s;
+        }
+
+        .orb-2 {
+            width: 480px; height: 480px;
+            background: radial-gradient(circle, rgba(59,130,246,0.09) 0%, transparent 70%);
+            bottom: -180px; right: -120px;
+            animation-duration: 18s;
+            animation-delay: -6s;
+        }
+
+        .orb-3 {
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+            top: 55%; left: 65%;
+            animation-duration: 10s;
+            animation-delay: -3s;
+        }
+
+        @keyframes drift {
+            0%   { transform: translate(0, 0) scale(1); }
+            50%  { transform: translate(25px, -18px) scale(1.04); }
+            100% { transform: translate(-18px, 28px) scale(0.96); }
+        }
+
+        /* ── Grid sutil ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 52px 52px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Partículas flotantes ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float-up linear infinite;
+        }
+
+        @keyframes float-up {
+            0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+            8%   { opacity: 1; }
+            92%  { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(540deg); opacity: 0; }
         }
 
         /* ── Navbar ── */
@@ -170,7 +246,6 @@
 
         .nav-user-btn.open .chevron { transform: rotate(180deg); }
 
-        /* Dropdown con animación */
         .dropdown-menu {
             position: absolute;
             top: calc(100% + 8px);
@@ -241,6 +316,8 @@
         .page-header {
             border-bottom: 1px solid rgba(255,255,255,0.06);
             background: rgba(12,12,14,0.5);
+            position: relative;
+            z-index: 10;
         }
 
         .page-header-inner {
@@ -261,6 +338,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 32px 24px;
+            position: relative;
+            z-index: 10;
             animation: pageFadeIn 0.45s ease both;
         }
 
@@ -271,6 +350,14 @@
     </style>
 </head>
 <body>
+
+    <!-- Orbes de fondo -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Partículas flotantes -->
+    <div class="particles" id="particles"></div>
 
     <nav class="navbar" id="main-navbar">
         <div class="navbar-inner">
@@ -371,9 +458,29 @@
 
         // Navbar con sombra al hacer scroll
         window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('main-navbar');
-            navbar.classList.toggle('scrolled', window.scrollY > 10);
+            document.getElementById('main-navbar').classList.toggle('scrolled', window.scrollY > 10);
         });
+
+        // Partículas flotantes (sutiles, menos densas que en el login)
+        const container = document.getElementById('particles');
+        const colors = ['rgba(99,102,241,', 'rgba(59,130,246,', 'rgba(139,92,246,'];
+
+        for (let i = 0; i < 14; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size    = Math.random() * 3 + 1;
+            const color   = colors[Math.floor(Math.random() * colors.length)];
+            const opacity = (Math.random() * 0.25 + 0.08).toFixed(2);
+            p.style.cssText = `
+                width: ${size}px;
+                height: ${size}px;
+                left: ${Math.random() * 100}%;
+                background: ${color}${opacity});
+                animation-duration: ${Math.random() * 16 + 12}s;
+                animation-delay: -${Math.random() * 16}s;
+            `;
+            container.appendChild(p);
+        }
     </script>
 </body>
 </html>
