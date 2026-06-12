@@ -111,11 +111,15 @@
 
         tbody tr {
             border-bottom: 1px solid rgba(255,255,255,0.04);
-            transition: background 0.15s;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: rgba(255,255,255,0.03); }
+        tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateX(3px);
+            box-shadow: -3px 0 0 #6366f1;
+        }
 
         tbody td { padding: 13px 16px; font-size: 13.5px; color: #a1a1aa; }
 
@@ -207,14 +211,6 @@
         }
     </style>
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-            </svg>
-            {{ session('success') }}
-        </div>
-    @endif
 
     <div class="toolbar">
         <form class="search-group" method="GET" action="{{ route('actividades.index') }}">
@@ -272,7 +268,7 @@
                 </thead>
                 <tbody>
                     @forelse ($actividades as $a)
-                        <tr>
+                        <tr class="fade-in-row" style="--row-index: {{ $loop->index }}">
                             <td>{{ $a->id }}</td>
                             <td class="td-primary">{{ $a->titulo }}</td>
                             <td>

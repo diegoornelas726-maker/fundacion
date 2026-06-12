@@ -482,5 +482,88 @@
             container.appendChild(p);
         }
     </script>
+
+    <!-- Toast Global Component -->
+    @if (session('success') || session('error') || session('info'))
+        @php
+            $toastType = 'success';
+            $toastMessage = '';
+            if (session('success')) {
+                $toastType = 'success';
+                $toastMessage = session('success');
+            } elseif (session('error')) {
+                $toastType = 'error';
+                $toastMessage = session('error');
+            } elseif (session('info')) {
+                $toastType = 'info';
+                $toastMessage = session('info');
+            }
+        @endphp
+
+        <div x-data="{ 
+                show: false, 
+                progress: 100,
+                init() {
+                    setTimeout(() => { this.show = true; }, 100);
+                    const duration = 4000;
+                    const intervalTime = 40;
+                    const step = (intervalTime / duration) * 100;
+                    const timer = setInterval(() => {
+                        this.progress -= step;
+                        if (this.progress <= 0) {
+                            this.progress = 0;
+                            clearInterval(timer);
+                            this.close();
+                        }
+                    }, intervalTime);
+                },
+                close() {
+                    this.show = false;
+                }
+            }"
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="translate-y-2 opacity-0 translate-x-8"
+            x-transition:enter-end="translate-y-0 opacity-100 translate-x-0"
+            x-transition:leave="transition ease-in duration-200 transform"
+            x-transition:leave-start="translate-y-0 opacity-100 translate-x-0"
+            x-transition:leave-end="translate-y-2 opacity-0 translate-x-8"
+            class="toast-container {{ $toastType }}"
+            style="display: none;"
+        >
+            <div class="toast-content">
+                @if ($toastType === 'success')
+                    <div class="toast-icon success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                        </svg>
+                    </div>
+                @elseif ($toastType === 'error')
+                    <div class="toast-icon error">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
+                        </svg>
+                    </div>
+                @else
+                    <div class="toast-icon info">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 1 1 1.085 1.085l-.04.02m0 0a1.5 1.5 0 1 0 1.5 1.5h-1.5V11.25z"/>
+                        </svg>
+                    </div>
+                @endif
+
+                <div class="toast-message">{{ $toastMessage }}</div>
+
+                <button @click="close()" class="toast-close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="toast-progress-bar">
+                <div class="toast-progress-fill" :style="'width: ' + progress + '%'"></div>
+            </div>
+        </div>
+    @endif
 </body>
 </html>

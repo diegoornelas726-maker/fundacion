@@ -44,7 +44,7 @@
         font-family: 'Plus Jakarta Sans', sans-serif;
         font-size: 14px;
         outline: none;
-        transition: border-color 0.18s, box-shadow 0.18s;
+        transition: border-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .field select option { background: #18181a; }
@@ -54,8 +54,9 @@
     .field input:focus,
     .field select:focus,
     .field textarea:focus {
-        border-color: rgba(99,102,241,0.5);
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18), 0 4px 12px rgba(99, 102, 241, 0.08);
+        background: rgba(255, 255, 255, 0.06);
     }
 
     .field textarea { resize: vertical; min-height: 90px; }
@@ -135,8 +136,8 @@
     }
 </style>
 
-<div class="form-card">
-    <form method="POST" action="{{ $route }}">
+<div class="form-card {{ $errors->any() ? 'animate-shake-card' : '' }}">
+    <form method="POST" action="{{ $route }}" x-data="{ submitting: false }" @submit="submitting = true">
         @csrf
         @method($method)
 
@@ -241,13 +242,35 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn-save">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <button type="submit" class="btn-save" :disabled="submitting">
+                <!-- Spinner -->
+                <svg x-show="submitting" class="animate-spin" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="15" height="15">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <!-- Icono de guardar -->
+                <svg x-show="!submitting" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                 </svg>
-                Guardar
+                <span x-text="submitting ? 'Guardando...' : 'Guardar'">Guardar</span>
             </button>
             <a href="{{ route('actividades.index') }}" class="btn-cancel">Cancelar</a>
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const formCard = document.querySelector('.form-card');
+        const form = formCard ? formCard.querySelector('form') : null;
+        if (form) {
+            form.addEventListener('invalid', (e) => {
+                const field = e.target;
+                field.classList.add('animate-shake');
+                field.addEventListener('animationend', () => {
+                    field.classList.remove('animate-shake');
+                }, { once: true });
+            }, true);
+        }
+    });
+</script>
