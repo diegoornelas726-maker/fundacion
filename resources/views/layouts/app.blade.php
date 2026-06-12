@@ -23,13 +23,21 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* ── Navbar ── */
         .navbar {
-            background: rgba(12, 12, 14, 0.95);
+            background: rgba(12, 12, 14, 0.85);
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(14px);
             position: sticky;
             top: 0;
             z-index: 50;
+            transition: box-shadow 0.3s, background 0.3s;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 12, 0.97);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+            border-bottom-color: rgba(255,255,255,0.09);
         }
 
         .navbar-inner {
@@ -47,7 +55,10 @@
             align-items: center;
             gap: 10px;
             text-decoration: none;
+            transition: opacity 0.15s;
         }
+
+        .nav-logo:hover { opacity: 0.85; }
 
         .nav-logo-icon {
             width: 34px;
@@ -58,6 +69,11 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
+            transition: box-shadow 0.2s;
+        }
+
+        .nav-logo:hover .nav-logo-icon {
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 4px 14px rgba(79,70,229,0.35);
         }
 
         .nav-logo-icon svg { width: 18px; height: 18px; color: #fff; }
@@ -69,10 +85,11 @@
             letter-spacing: -0.3px;
         }
 
+        /* ── Nav links ── */
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         .nav-link {
@@ -82,12 +99,36 @@
             font-weight: 500;
             color: #71717a;
             text-decoration: none;
-            transition: all 0.15s;
+            transition: color 0.15s, background 0.15s;
+            position: relative;
         }
 
         .nav-link:hover { color: #e4e4e7; background: rgba(255,255,255,0.05); }
-        .nav-link.active { color: #e4e4e7; background: rgba(99,102,241,0.12); }
 
+        .nav-link.active {
+            color: #e4e4e7;
+            background: rgba(99,102,241,0.12);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2px;
+            background: #6366f1;
+            border-radius: 2px;
+            animation: slideIn 0.25s ease both;
+        }
+
+        @keyframes slideIn {
+            from { width: 0; opacity: 0; }
+            to   { width: 16px; opacity: 1; }
+        }
+
+        /* ── User dropdown ── */
         .nav-user { position: relative; }
 
         .nav-user-btn {
@@ -121,11 +162,16 @@
             color: #fff;
         }
 
-        .nav-user-btn svg { width: 14px; height: 14px; transition: transform 0.2s; }
-        .nav-user-btn.open svg { transform: rotate(180deg); }
+        .nav-user-btn .chevron {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.22s cubic-bezier(.22,.68,0,1.2);
+        }
 
+        .nav-user-btn.open .chevron { transform: rotate(180deg); }
+
+        /* Dropdown con animación */
         .dropdown-menu {
-            display: none;
             position: absolute;
             top: calc(100% + 8px);
             right: 0;
@@ -136,9 +182,18 @@
             padding: 6px;
             box-shadow: 0 16px 48px rgba(0,0,0,0.5);
             backdrop-filter: blur(12px);
+            transform-origin: top right;
+            transform: scale(0.94) translateY(-6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.2s cubic-bezier(.22,.68,0,1.2), opacity 0.18s ease;
         }
 
-        .dropdown-menu.open { display: block; }
+        .dropdown-menu.open {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
 
         .dropdown-header {
             padding: 8px 10px 10px;
@@ -182,6 +237,7 @@
         .dropdown-item.danger { color: #f87171; }
         .dropdown-item.danger:hover { background: rgba(239,68,68,0.08); color: #fca5a5; }
 
+        /* ── Page header ── */
         .page-header {
             border-bottom: 1px solid rgba(255,255,255,0.06);
             background: rgba(12,12,14,0.5);
@@ -200,16 +256,23 @@
             letter-spacing: -0.4px;
         }
 
+        /* ── Page content con fade-in ── */
         .page-content {
             max-width: 1200px;
             margin: 0 auto;
             padding: 32px 24px;
+            animation: pageFadeIn 0.45s ease both;
+        }
+
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
+    <nav class="navbar" id="main-navbar">
         <div class="navbar-inner">
 
             <a href="{{ route('dashboard') }}" class="nav-logo">
@@ -221,7 +284,6 @@
                 <span class="nav-logo-text">Fundación Don Benjamín</span>
             </a>
 
-            <!-- Links de navegación -->
             <div class="nav-links">
                 <a href="{{ route('dashboard') }}"
                    class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -247,7 +309,7 @@
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </div>
                     {{ Auth::user()->name }}
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
                     </svg>
                 </button>
@@ -290,6 +352,7 @@
     </main>
 
     <script>
+        // Dropdown toggle
         function toggleDropdown() {
             const btn  = document.getElementById('user-menu-btn');
             const menu = document.getElementById('user-dropdown');
@@ -304,6 +367,12 @@
                 btn.classList.remove('open');
                 menu.classList.remove('open');
             }
+        });
+
+        // Navbar con sombra al hacer scroll
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('main-navbar');
+            navbar.classList.toggle('scrolled', window.scrollY > 10);
         });
     </script>
 </body>

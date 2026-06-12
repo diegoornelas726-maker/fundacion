@@ -34,8 +34,8 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 70% 50% at 50% -5%, rgba(99,102,241,0.14) 0%, transparent 65%),
-                radial-gradient(ellipse 40% 30% at 90% 100%, rgba(59,130,246,0.07) 0%, transparent 55%);
+                radial-gradient(ellipse 70% 50% at 50% -5%, rgba(99,102,241,0.18) 0%, transparent 65%),
+                radial-gradient(ellipse 40% 30% at 90% 100%, rgba(59,130,246,0.09) 0%, transparent 55%);
             pointer-events: none;
         }
 
@@ -50,20 +50,58 @@
             pointer-events: none;
         }
 
+        /* ── Partículas flotantes ── */
+        .particles {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(99,102,241,0.6);
+            animation: floatParticle linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ── Wrapper ── */
         .wrapper {
             position: relative;
             z-index: 1;
             width: 100%;
             max-width: 400px;
             padding: 0 24px;
-            animation: fadeUp 0.6s cubic-bezier(.22,.68,0,1.15) both;
+            animation: fadeUp 0.7s cubic-bezier(.22,.68,0,1.15) both;
         }
 
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(24px); }
+            from { opacity: 0; transform: translateY(28px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            15%     { transform: translateX(-8px); }
+            30%     { transform: translateX(8px); }
+            45%     { transform: translateX(-6px); }
+            60%     { transform: translateX(6px); }
+            75%     { transform: translateX(-3px); }
+            90%     { transform: translateX(3px); }
+        }
+
+        .wrapper.has-error .card {
+            animation: shake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* ── Brand ── */
         .brand {
             display: flex;
             flex-direction: column;
@@ -81,6 +119,12 @@
             justify-content: center;
             margin-bottom: 14px;
             box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 6px 24px rgba(79,70,229,0.28);
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 6px 24px rgba(79,70,229,0.28); }
+            50%       { box-shadow: 0 0 0 6px rgba(99,102,241,0.12), 0 6px 32px rgba(79,70,229,0.45); }
         }
 
         .badge svg { width: 24px; height: 24px; color: #fff; }
@@ -98,6 +142,7 @@
             margin-top: 3px;
         }
 
+        /* ── Card ── */
         .card {
             background: rgba(18,18,20,0.88);
             border: 1px solid rgba(255,255,255,0.07);
@@ -105,6 +150,11 @@
             padding: 32px 28px;
             backdrop-filter: blur(16px);
             box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset;
+            transition: box-shadow 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 24px 70px rgba(0,0,0,0.65), 0 1px 0 rgba(255,255,255,0.07) inset;
         }
 
         .card-title {
@@ -129,9 +179,11 @@
             font-size: 13px;
             color: #a5b4fc;
             margin-bottom: 18px;
+            animation: fadeUp 0.4s ease both;
         }
 
-        .field { margin-bottom: 16px; }
+        /* ── Fields ── */
+        .field { margin-bottom: 16px; position: relative; }
 
         .field label {
             display: block;
@@ -139,7 +191,10 @@
             font-weight: 600;
             color: #71717a;
             margin-bottom: 6px;
+            transition: color 0.18s;
         }
+
+        .field:focus-within label { color: #a5b4fc; }
 
         .field input {
             width: 100%;
@@ -151,12 +206,13 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
         }
 
         .field input:focus {
-            border-color: rgba(99,102,241,0.5);
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+            border-color: rgba(99,102,241,0.55);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.13);
+            background: rgba(99,102,241,0.04);
         }
 
         .field input::placeholder { color: #3f3f46; }
@@ -165,9 +221,10 @@
             font-size: 12px;
             color: #f87171;
             margin-top: 5px;
+            animation: fadeUp 0.3s ease both;
         }
 
-        /* Solo recordarme, sin el link de olvidé */
+        /* ── Options row ── */
         .row-options {
             display: flex;
             align-items: center;
@@ -191,6 +248,7 @@
             cursor: pointer;
         }
 
+        /* ── Submit button ── */
         .btn-submit {
             display: flex;
             align-items: center;
@@ -207,17 +265,55 @@
             background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
             color: #fff;
             box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 18px rgba(79,70,229,0.35);
-            transition: all 0.18s ease;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
 
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .btn-submit:hover::after { opacity: 1; }
+
         .btn-submit:hover {
-            background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%);
-            box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 28px rgba(99,102,241,0.5);
+            box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 8px 30px rgba(99,102,241,0.55);
             transform: translateY(-1px);
         }
 
         .btn-submit:active { transform: translateY(0); }
 
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Spinner de carga */
+        .spinner {
+            display: none;
+            width: 15px;
+            height: 15px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.65s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-submit.loading .spinner { display: block; }
+        .btn-submit.loading .btn-icon,
+        .btn-submit.loading .btn-text { opacity: 0.5; }
+
+        /* ── Footer ── */
         .card-footer {
             margin-top: 20px;
             text-align: center;
@@ -229,6 +325,7 @@
             color: #6366f1;
             font-weight: 600;
             text-decoration: none;
+            transition: color 0.15s;
         }
 
         .card-footer a:hover { color: #818cf8; }
@@ -242,7 +339,11 @@
     </style>
 </head>
 <body>
-<div class="wrapper">
+
+<!-- Partículas de fondo -->
+<div class="particles" id="particles"></div>
+
+<div class="wrapper {{ $errors->any() ? 'has-error' : '' }}">
 
     <div class="brand">
         <div class="badge">
@@ -262,7 +363,7 @@
             <div class="alert-status">{{ session('status') }}</div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" id="login-form">
             @csrf
 
             <div class="field">
@@ -293,13 +394,14 @@
                 </label>
             </div>
 
-            <button type="submit" class="btn-submit">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <button type="submit" class="btn-submit" id="submit-btn">
+                <div class="spinner"></div>
+                <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                     <polyline points="10 17 15 12 10 7"/>
                     <line x1="15" y1="12" x2="3" y2="12"/>
                 </svg>
-                Iniciar sesión
+                <span class="btn-text">Iniciar sesión</span>
             </button>
         </form>
 
@@ -312,5 +414,33 @@
 
     <p class="page-footer">© {{ date('Y') }} Fundación Don Benjamín · Uso interno</p>
 </div>
+
+<script>
+    // Spinner al hacer submit
+    document.getElementById('login-form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+
+    // Generar partículas flotantes
+    const container = document.getElementById('particles');
+    const count = 18;
+
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1.5;
+        p.style.cssText = `
+            width: ${size}px;
+            height: ${size}px;
+            left: ${Math.random() * 100}%;
+            opacity: ${Math.random() * 0.5 + 0.1};
+            animation-duration: ${Math.random() * 12 + 10}s;
+            animation-delay: ${Math.random() * 10}s;
+        `;
+        container.appendChild(p);
+    }
+</script>
 </body>
 </html>
