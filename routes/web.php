@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BeneficiarioController;
 use App\Http\Controllers\ApoyoController;
 use App\Http\Controllers\ActividadController;
+use App\Http\Controllers\AsistenciaController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -23,6 +24,15 @@ Route::middleware('auth')->group(function () {
     // ... rutas existentes ...
     Route::resource('beneficiarios', BeneficiarioController::class);
 });
+Route::middleware('auth')->group(function () {
+    Route::get('asistencia',            [AsistenciaController::class, 'index'])->name('asistencia.index');
+    Route::post('asistencia',           [AsistenciaController::class, 'store'])->name('asistencia.store');
+    Route::get('asistencia/historial',  [AsistenciaController::class, 'historial'])->name('asistencia.historial');
+    Route::get('asistencia/pdf',        [AsistenciaController::class, 'pdf'])->name('asistencia.pdf');
+    Route::post('asistencia/visitante', [AsistenciaController::class, 'storeVisitante'])->name('asistencia.visitante.store');
+    Route::delete('asistencia/visitante/{asistencia}', [AsistenciaController::class, 'destroyVisitante'])->name('asistencia.visitante.destroy');
+});
+
 Route::resource('apoyos', ApoyoController::class)->except(['show']);
 Route::resource('actividades', ActividadController::class)
     ->parameters(['actividades' => 'actividad'])

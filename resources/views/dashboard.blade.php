@@ -40,12 +40,16 @@
         /* ── Grid de tarjetas ── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-top: 20px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 560px) {
             .stats-grid { grid-template-columns: 1fr; }
         }
 
@@ -97,6 +101,7 @@
         .stat-card:nth-child(1) { animation-delay: 0.1s; }
         .stat-card:nth-child(2) { animation-delay: 0.2s; }
         .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
 
         @keyframes fadeSlideUp {
             from { opacity: 0; transform: translateY(18px); }
@@ -144,6 +149,12 @@
             color: #4ade80;
         }
 
+        .stat-icon.amber {
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.2);
+            color: #fbbf24;
+        }
+
         .stat-number {
             font-size: 36px;
             font-weight: 800;
@@ -177,6 +188,7 @@
         .stat-bar-fill.purple { background: linear-gradient(90deg, #4f46e5, #818cf8); }
         .stat-bar-fill.blue   { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
         .stat-bar-fill.green  { background: linear-gradient(90deg, #16a34a, #4ade80); }
+        .stat-bar-fill.amber  { background: linear-gradient(90deg, #d97706, #fbbf24); }
     </style>
 
     <!-- Bienvenida -->
@@ -243,6 +255,23 @@
             <div class="stat-desc">actividades registradas</div>
             <div class="stat-bar">
                 <div class="stat-bar-fill green" data-width="45"></div>
+            </div>
+        </a>
+
+        <!-- Asistencia -->
+        <a href="{{ route('asistencia.index') }}" class="stat-card" style="text-decoration:none;">
+            <div class="stat-header">
+                <span class="stat-label">Asistencia hoy</span>
+                <div class="stat-icon amber">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="stat-number" data-target="{{ $asistenciasHoy }}">0</div>
+            <div class="stat-desc">{{ $asistenciasMes }} este mes</div>
+            <div class="stat-bar">
+                <div class="stat-bar-fill amber" data-width="80"></div>
             </div>
         </a>
 

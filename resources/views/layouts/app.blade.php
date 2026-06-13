@@ -583,6 +583,10 @@
                    class="nav-link {{ request()->routeIs('actividades.*') ? 'active' : '' }}">
                     Actividades
                 </a>
+                <a href="{{ route('asistencia.index') }}"
+                   class="nav-link {{ request()->routeIs('asistencia.*') ? 'active' : '' }}">
+                    Asistencia
+                </a>
 
                 <span class="nav-indicator" id="nav-indicator"></span>
             </div>
