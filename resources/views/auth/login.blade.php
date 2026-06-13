@@ -147,33 +147,6 @@
 
         .badge svg { width: 30px; height: 30px; color: #fff; }
 
-        /* ── Logo de la fundación ── */
-        .brand-logo {
-            display: block;
-            width: 86px;
-            height: 86px;
-            object-fit: contain;
-            margin: 0 auto 16px;
-            border-radius: 20px;
-            background: #fff;
-            padding: 9px;
-            box-shadow: 0 10px 34px rgba(79,70,229,0.28), 0 0 0 1px rgba(99,102,241,0.15);
-            opacity: 0;
-            transform: scale(0.6);
-            animation: logoPop 0.7s cubic-bezier(.22,.68,0,1.4) 0.15s forwards;
-            transition: transform 0.25s, box-shadow 0.25s;
-        }
-        .brand-logo:hover {
-            transform: scale(1.06) rotate(3deg);
-            box-shadow: 0 14px 42px rgba(79,70,229,0.4), 0 0 0 1px rgba(99,102,241,0.3);
-        }
-
-        @keyframes logoPop {
-            0%   { opacity: 0; transform: scale(0.6); }
-            60%  { opacity: 1; transform: scale(1.1); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
         /* ── Título: entra desde la izquierda ── */
         .brand-name {
             font-size: 22px;
@@ -669,7 +642,6 @@
         @media (prefers-reduced-motion: reduce) {
             .mascot { animation: none !important; opacity: 1 !important; transform: none !important; }
             .mascot-body, .mascot-antenna::before { animation: none !important; }
-            .brand-logo { animation: none !important; opacity: 1 !important; transform: none !important; }
         }
     </style>
 </head>
@@ -704,9 +676,6 @@
                 <div class="mascot-hand right"></div>
             </div>
         </div>
-
-        <!-- Logo de la fundación -->
-        <img src="{{ asset('images/logo.png') }}" alt="Fundación Don Benjamín" class="brand-logo">
 
         <!-- Título: desde la izquierda -->
         <span class="brand-name">Fundación Don Benjamín</span>
