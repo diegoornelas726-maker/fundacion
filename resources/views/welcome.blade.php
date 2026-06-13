@@ -162,7 +162,7 @@
             z-index: 2;
             width: 82px;
             height: 82px;
-            border-radius: 22px;
+            border-radius: 50%;
             background: #fff;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(79,70,229,0.35);
