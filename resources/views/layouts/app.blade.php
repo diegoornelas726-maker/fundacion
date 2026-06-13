@@ -166,6 +166,7 @@
             display: flex;
             align-items: center;
             gap: 2px;
+            position: relative;
         }
 
         .nav-link {
@@ -186,22 +187,21 @@
             background: rgba(99,102,241,0.12);
         }
 
-        .nav-link.active::after {
-            content: '';
+        /* ── Barra deslizante de la pestaña activa ── */
+        .nav-indicator {
             position: absolute;
             bottom: -1px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 16px;
+            left: 0;
+            width: 0;
             height: 2px;
             background: #6366f1;
             border-radius: 2px;
-            animation: slideIn 0.25s ease both;
-        }
-
-        @keyframes slideIn {
-            from { width: 0; opacity: 0; }
-            to   { width: 16px; opacity: 1; }
+            opacity: 0;
+            box-shadow: 0 0 8px rgba(99,102,241,0.6);
+            transition: left 0.32s cubic-bezier(.22,.68,0,1.2),
+                        width 0.32s cubic-bezier(.22,.68,0,1.2),
+                        opacity 0.2s ease;
+            pointer-events: none;
         }
 
         /* ── User dropdown ── */
@@ -265,9 +265,18 @@
         }
 
         .dropdown-menu.open {
-            transform: scale(1) translateY(0);
             opacity: 1;
             pointer-events: auto;
+            animation: dropdownBounce 0.5s cubic-bezier(.18,.89,.32,1.28) forwards;
+        }
+
+        /* Rebote elástico al desplegar el menú de usuario */
+        @keyframes dropdownBounce {
+            0%   { opacity: 0; transform: scale(0.85) translateY(-10px); }
+            45%  { opacity: 1; transform: scale(1.04) translateY(3px); }
+            70%  { transform: scale(0.98) translateY(-1px); }
+            85%  { transform: scale(1.012) translateY(1px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         .dropdown-header {
@@ -388,6 +397,8 @@
                    class="nav-link {{ request()->routeIs('actividades.*') ? 'active' : '' }}">
                     Actividades
                 </a>
+
+                <span class="nav-indicator" id="nav-indicator"></span>
             </div>
 
             <div class="nav-user">
@@ -460,6 +471,34 @@
         window.addEventListener('scroll', function() {
             document.getElementById('main-navbar').classList.toggle('scrolled', window.scrollY > 10);
         });
+
+        // Barra deslizante de la pestaña activa
+        (function () {
+            const navLinks  = document.querySelector('.nav-links');
+            const indicator = document.getElementById('nav-indicator');
+            if (!navLinks || !indicator) return;
+
+            const links      = navLinks.querySelectorAll('.nav-link');
+            const activeLink = navLinks.querySelector('.nav-link.active');
+
+            function moveTo(el, animate = true) {
+                indicator.style.transition = animate ? '' : 'none';
+                if (!el) { indicator.style.opacity = '0'; return; }
+                const navRect  = navLinks.getBoundingClientRect();
+                const rect     = el.getBoundingClientRect();
+                const width    = Math.max(18, rect.width * 0.55);
+                indicator.style.width   = width + 'px';
+                indicator.style.left    = (rect.left - navRect.left + (rect.width - width) / 2) + 'px';
+                indicator.style.opacity = '1';
+            }
+
+            // Posición inicial sin animar (evita el "salto" al cargar)
+            requestAnimationFrame(() => moveTo(activeLink, false));
+
+            links.forEach(link => link.addEventListener('mouseenter', () => moveTo(link)));
+            navLinks.addEventListener('mouseleave', () => moveTo(activeLink));
+            window.addEventListener('resize', () => moveTo(activeLink, false));
+        })();
 
         // Partículas flotantes (sutiles, menos densas que en el login)
         const container = document.getElementById('particles');
