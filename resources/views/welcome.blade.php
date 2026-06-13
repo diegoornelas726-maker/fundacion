@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Fundación Don Benjamín') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,23 +117,17 @@
             align-items: center;
         }
 
-        /* ── Ícono: entra desde arriba ── */
-        .badge {
-            width: 62px;
-            height: 62px;
-            border-radius: 16px;
-            background: linear-gradient(145deg, #4f46e5 0%, #3b82f6 100%);
+        /* ── Logo con halo animado: entra desde arriba ── */
+        .logo-stage {
+            position: relative;
+            width: 104px;
+            height: 104px;
+            margin-bottom: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            box-shadow:
-                0 0 0 1px rgba(99,102,241,0.35),
-                0 8px 32px rgba(79,70,229,0.35);
             opacity: 0;
-            animation:
-                slideDown 0.7s cubic-bezier(.22,.68,0,1.3) 0.1s forwards,
-                pulse-glow 3s ease-in-out 1s infinite;
+            animation: slideDown 0.8s cubic-bezier(.22,.68,0,1.3) 0.1s forwards;
         }
 
         @keyframes slideDown {
@@ -140,12 +135,63 @@
             to   { opacity: 1; transform: translateY(0)    scale(1); }
         }
 
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 0 1px rgba(99,102,241,0.35), 0 8px 32px rgba(79,70,229,0.35), 0 0 50px rgba(79,70,229,0.12); }
-            50%       { box-shadow: 0 0 0 1px rgba(99,102,241,0.55), 0 8px 40px rgba(79,70,229,0.55), 0 0 80px rgba(79,70,229,0.22); }
+        /* anillo de gradiente que gira */
+        .logo-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #4f46e5, #3b82f6, #8b5cf6, #6366f1, #4f46e5);
+            animation: spin 5s linear infinite;
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+                    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
         }
 
-        .badge svg { width: 30px; height: 30px; color: #fff; }
+        /* halo difuso pulsante detrás */
+        .logo-glow {
+            position: absolute;
+            inset: -16px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99,102,241,0.45) 0%, transparent 70%);
+            filter: blur(14px);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        /* pastilla blanca con el logo */
+        .brand-badge {
+            position: relative;
+            z-index: 2;
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(79,70,229,0.35);
+            animation: logoFloat 4s ease-in-out 0.9s infinite;
+            transition: transform 0.3s cubic-bezier(.22,.68,0,1.4);
+        }
+
+        .brand-badge img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .logo-stage:hover .brand-badge { transform: scale(1.08) rotate(4deg); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5;  transform: scale(1); }
+            50%      { opacity: 0.95; transform: scale(1.1); }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-6px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .logo-stage, .brand-badge, .logo-ring, .logo-glow {
+                animation: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
 
         /* ── Título: entra desde la izquierda ── */
         .title {
@@ -322,11 +368,13 @@
 
     <div class="wrapper">
 
-        <!-- Ícono: baja desde arriba -->
-        <div class="badge">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V9l9-6 9 6v12M9 21V12h6v9"/>
-            </svg>
+        <!-- Logo: baja desde arriba con halo giratorio -->
+        <div class="logo-stage">
+            <span class="logo-glow"></span>
+            <span class="logo-ring"></span>
+            <div class="brand-badge">
+                <img src="{{ asset('images/logo.png') }}" alt="Fundación Don Benjamín">
+            </div>
         </div>
 
         <!-- Título: entra desde la izquierda -->
