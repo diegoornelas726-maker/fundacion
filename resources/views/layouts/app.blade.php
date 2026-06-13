@@ -485,6 +485,52 @@
         [data-theme="light"] .btn-search:hover { background: rgba(0,0,0,0.07); color: #18181b; }
         [data-theme="light"] .empty-state p { color: #71717a; }
         [data-theme="light"] .pagination-wrap { border-top-color: rgba(0,0,0,0.07); }
+
+        /* Formularios (crear/editar) y perfil */
+        [data-theme="light"] .form-card,
+        [data-theme="light"] .profile-card {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(0,0,0,0.07);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .card-title { color: #18181b; }
+        [data-theme="light"] .card-desc,
+        [data-theme="light"] .field-note { color: #71717a; }
+        [data-theme="light"] .divider { background: rgba(0,0,0,0.08); }
+        [data-theme="light"] .section-label {
+            color: #71717a;
+            border-bottom-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .field label { color: #52525b; }
+        [data-theme="light"] .field input,
+        [data-theme="light"] .field select,
+        [data-theme="light"] .field textarea {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.1);
+            color: #18181b;
+        }
+        [data-theme="light"] .field input::placeholder,
+        [data-theme="light"] .field textarea::placeholder { color: #a1a1aa; }
+        [data-theme="light"] .field select option { background: #fff; }
+        [data-theme="light"] .field input:focus,
+        [data-theme="light"] .field select:focus,
+        [data-theme="light"] .field textarea:focus {
+            background: #fff;
+            border-color: #6366f1;
+        }
+        [data-theme="light"] .tipo-chip {
+            background: rgba(99,102,241,0.08);
+            border-color: rgba(99,102,241,0.2);
+            color: #4f46e5;
+        }
+        [data-theme="light"] .tipo-chip:hover { background: rgba(99,102,241,0.16); color: #4338ca; }
+        [data-theme="light"] .btn-cancel {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.1);
+            color: #52525b;
+        }
+        [data-theme="light"] .btn-cancel:hover { background: rgba(0,0,0,0.07); color: #18181b; }
+        [data-theme="light"] .form-actions { border-top-color: rgba(0,0,0,0.07); }
     </style>
 </head>
 <body>
