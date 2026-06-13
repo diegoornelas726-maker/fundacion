@@ -187,3 +187,21 @@
     animation: fade-in-row 0.35s ease-out forwards;
     animation-delay: calc(var(--row-index, 0) * 0.04s);
 }
+
+@keyframes row-out {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+}
+
+.row-removing {
+    animation: row-out 0.3s ease-in forwards !important;
+    background: rgba(239, 68, 68, 0.06) !important;
+    box-shadow: -3px 0 0 #ef4444 !important;
+    pointer-events: none;
+}

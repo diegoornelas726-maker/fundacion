@@ -273,6 +273,34 @@
 
         .field input::placeholder { color: #3f3f46; }
 
+        /* ── Mostrar / ocultar contraseña ── */
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 44px; }
+
+        .toggle-pass {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: none;
+            color: #52525b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .toggle-pass:hover { color: #a5b4fc; background: rgba(255,255,255,0.05); }
+        .toggle-pass svg { width: 18px; height: 18px; }
+        .toggle-pass .icon-hide { display: none; }
+        .toggle-pass.is-visible .icon-show { display: none; }
+        .toggle-pass.is-visible .icon-hide { display: block; }
+
         .field-error {
             font-size: 12px;
             color: #f87171;
@@ -680,9 +708,20 @@
 
                 <div class="field">
                     <label for="password">Contraseña</label>
-                    <input id="password" type="password" name="password"
-                           placeholder="••••••••"
-                           required autocomplete="current-password">
+                    <div class="password-wrap">
+                        <input id="password" type="password" name="password"
+                               placeholder="••••••••"
+                               required autocomplete="current-password">
+                        <button type="button" class="toggle-pass" id="toggle-pass" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                            <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                            </svg>
+                            <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                            </svg>
+                        </button>
+                    </div>
                     @error('password')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
@@ -771,6 +810,25 @@
             if (passEl) {
                 passEl.addEventListener('focus', () => { mode = 'hidden'; mascot.classList.add('covering'); });
                 passEl.addEventListener('blur',  () => { mascot.classList.remove('covering', 'peeking'); mode = 'cursor'; });
+            }
+
+            // 3b) Mostrar / ocultar contraseña + reacción del monito (espía entre los dedos)
+            const toggle = document.getElementById('toggle-pass');
+            if (toggle && passEl) {
+                toggle.addEventListener('click', () => {
+                    const show = passEl.type === 'password';
+                    passEl.type = show ? 'text' : 'password';
+                    toggle.classList.toggle('is-visible', show);
+                    const label = show ? 'Ocultar contraseña' : 'Mostrar contraseña';
+                    toggle.setAttribute('aria-label', label);
+                    toggle.setAttribute('title', label);
+                    if (show) {
+                        mascot.classList.add('peeking'); // espía: ya puede ver la contraseña
+                    } else {
+                        mascot.classList.remove('peeking');
+                    }
+                    passEl.focus();
+                });
             }
 
             // 4) Saludo / celebración al iniciar sesión

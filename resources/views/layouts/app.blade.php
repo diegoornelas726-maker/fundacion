@@ -6,6 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Fundación Don Benjamín') }}</title>
 
+    <script>
+        // Aplica el tema guardado antes de pintar (evita el parpadeo)
+        (function () {
+            const t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -356,6 +364,127 @@
             from { opacity: 0; transform: translateY(12px); }
             to   { opacity: 1; transform: translateY(0); }
         }
+
+        /* ── Botón de tema (sol/luna) ── */
+        .theme-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            color: #a1a1aa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .theme-toggle:hover { background: rgba(255,255,255,0.08); color: #e4e4e7; }
+        .theme-toggle svg {
+            width: 18px; height: 18px;
+            position: absolute;
+            transition: transform 0.4s cubic-bezier(.22,.68,0,1.3), opacity 0.3s ease;
+        }
+        .theme-toggle .icon-sun  { transform: rotate(90deg) scale(0); opacity: 0; }
+        .theme-toggle .icon-moon { transform: rotate(0deg) scale(1);  opacity: 1; }
+        [data-theme="light"] .theme-toggle .icon-sun  { transform: rotate(0deg) scale(1);  opacity: 1; }
+        [data-theme="light"] .theme-toggle .icon-moon { transform: rotate(-90deg) scale(0); opacity: 0; }
+
+        .nav-user { display: flex; align-items: center; }
+
+        /* ════════════════════════════════════════════
+           TEMA CLARO
+           ════════════════════════════════════════════ */
+        [data-theme="light"] body { background-color: #f4f5f7; color: #27272a; }
+
+        [data-theme="light"] .orb-1 { background: radial-gradient(circle, rgba(79,70,229,0.10) 0%, transparent 70%); }
+        [data-theme="light"] .orb-2 { background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%); }
+        [data-theme="light"] .orb-3 { background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%); }
+        [data-theme="light"] body::after {
+            background-image:
+                linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
+        }
+
+        [data-theme="light"] .navbar {
+            background: rgba(255,255,255,0.85);
+            border-bottom-color: rgba(0,0,0,0.07);
+        }
+        [data-theme="light"] .navbar.scrolled {
+            background: rgba(255,255,255,0.97);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .nav-logo-text { color: #18181b; }
+        [data-theme="light"] .nav-link { color: #71717a; }
+        [data-theme="light"] .nav-link:hover { color: #18181b; background: rgba(0,0,0,0.05); }
+        [data-theme="light"] .nav-link.active { color: #4f46e5; background: rgba(99,102,241,0.1); }
+
+        [data-theme="light"] .nav-user-btn,
+        [data-theme="light"] .theme-toggle {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+            color: #52525b;
+        }
+        [data-theme="light"] .nav-user-btn:hover,
+        [data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.06); color: #18181b; }
+
+        [data-theme="light"] .dropdown-menu {
+            background: rgba(255,255,255,0.98);
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.14);
+        }
+        [data-theme="light"] .dropdown-header { border-bottom-color: rgba(0,0,0,0.07); }
+        [data-theme="light"] .dropdown-header-name { color: #18181b; }
+        [data-theme="light"] .dropdown-item { color: #52525b; }
+        [data-theme="light"] .dropdown-item:hover { background: rgba(0,0,0,0.05); color: #18181b; }
+
+        [data-theme="light"] .page-header {
+            background: rgba(255,255,255,0.6);
+            border-bottom-color: rgba(0,0,0,0.07);
+        }
+        [data-theme="light"] .page-header h1 { color: #18181b; }
+
+        /* Superficies compartidas (dashboard, tablas) */
+        [data-theme="light"] .welcome-card,
+        [data-theme="light"] .stat-card,
+        [data-theme="light"] .table-card {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(0,0,0,0.07);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .welcome-text h2,
+        [data-theme="light"] .stat-number,
+        [data-theme="light"] .td-name { color: #18181b; }
+        [data-theme="light"] .welcome-text p,
+        [data-theme="light"] .stat-desc,
+        [data-theme="light"] tbody td { color: #52525b; }
+        [data-theme="light"] .stat-label,
+        [data-theme="light"] thead th { color: #71717a; }
+        [data-theme="light"] thead tr { border-bottom-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] tbody tr { border-bottom-color: rgba(0,0,0,0.05); }
+        [data-theme="light"] tbody tr:hover { background: rgba(0,0,0,0.03); }
+        [data-theme="light"] .stat-bar { background: rgba(0,0,0,0.06); }
+
+        [data-theme="light"] .search-input,
+        [data-theme="light"] .filter-select {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.1);
+            color: #18181b;
+        }
+        [data-theme="light"] .search-input::placeholder { color: #a1a1aa; }
+        [data-theme="light"] .filter-select option { background: #fff; }
+        [data-theme="light"] .btn-search {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.1);
+            color: #52525b;
+        }
+        [data-theme="light"] .btn-search:hover { background: rgba(0,0,0,0.07); color: #18181b; }
+        [data-theme="light"] .empty-state p { color: #71717a; }
+        [data-theme="light"] .pagination-wrap { border-top-color: rgba(0,0,0,0.07); }
     </style>
 </head>
 <body>
@@ -402,6 +531,15 @@
             </div>
 
             <div class="nav-user">
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Cambiar tema" title="Cambiar tema">
+                    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+                    </svg>
+                    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
+                    </svg>
+                </button>
+
                 <button class="nav-user-btn" id="user-menu-btn" onclick="toggleDropdown()">
                     <div class="nav-user-avatar">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
@@ -450,6 +588,25 @@
     </main>
 
     <script>
+        // Cambio de tema claro/oscuro (persistente)
+        function toggleTheme() {
+            const root = document.documentElement;
+            const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+
+        // Salida animada al eliminar una fila de la tabla
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            const row  = form.closest && form.closest('tr');
+            if (!row || !form.querySelector('.btn-del')) return;
+            if (e.defaultPrevented) return; // el usuario canceló el confirm()
+            e.preventDefault();
+            row.classList.add('row-removing');
+            setTimeout(() => form.submit(), 300);
+        });
+
         // Dropdown toggle
         function toggleDropdown() {
             const btn  = document.getElementById('user-menu-btn');
