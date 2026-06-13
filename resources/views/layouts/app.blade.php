@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Fundación Don Benjamín') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <script>
         // Aplica el tema guardado antes de pintar (evita el parpadeo)
@@ -145,22 +146,34 @@
         .nav-logo:hover { opacity: 0.85; }
 
         .nav-logo-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            background: linear-gradient(145deg, #4f46e5, #3b82f6);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
-            transition: box-shadow 0.2s;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.25);
+            transition: box-shadow 0.25s, transform 0.25s;
+            animation: logoFloat 4s ease-in-out infinite;
         }
 
         .nav-logo:hover .nav-logo-icon {
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 4px 14px rgba(79,70,229,0.35);
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 6px 18px rgba(79,70,229,0.35);
+            transform: scale(1.08) rotate(-4deg);
         }
 
-        .nav-logo-icon svg { width: 18px; height: 18px; color: #fff; }
+        .nav-logo-icon img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .nav-logo-icon { animation: none !important; }
+        }
 
         .nav-logo-text {
             font-size: 14px;
@@ -548,9 +561,7 @@
 
             <a href="{{ route('dashboard') }}" class="nav-logo">
                 <div class="nav-logo-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V9l9-6 9 6v12M9 21V12h6v9"/>
-                    </svg>
+                    <img src="{{ asset('images/logo.png') }}" alt="Fundación Don Benjamín">
                 </div>
                 <span class="nav-logo-text">Fundación Don Benjamín</span>
             </a>
