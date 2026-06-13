@@ -6,6 +6,7 @@ use App\Http\Controllers\BeneficiarioController;
 use App\Http\Controllers\ApoyoController;
 use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\AsistenciaController;
+use App\Http\Controllers\ExportController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,7 +29,12 @@ Route::middleware('auth')->group(function () {
     Route::get('asistencia',            [AsistenciaController::class, 'index'])->name('asistencia.index');
     Route::post('asistencia',           [AsistenciaController::class, 'store'])->name('asistencia.store');
     Route::get('asistencia/historial',  [AsistenciaController::class, 'historial'])->name('asistencia.historial');
+    Route::get('asistencia/personas',   [AsistenciaController::class, 'personas'])->name('asistencia.personas');
     Route::get('asistencia/pdf',        [AsistenciaController::class, 'pdf'])->name('asistencia.pdf');
+
+    Route::get('exportar/beneficiarios', [ExportController::class, 'beneficiarios'])->name('beneficiarios.export');
+    Route::get('exportar/apoyos',        [ExportController::class, 'apoyos'])->name('apoyos.export');
+    Route::get('exportar/actividades',   [ExportController::class, 'actividades'])->name('actividades.export');
     Route::post('asistencia/visitante', [AsistenciaController::class, 'storeVisitante'])->name('asistencia.visitante.store');
     Route::delete('asistencia/visitante/{asistencia}', [AsistenciaController::class, 'destroyVisitante'])->name('asistencia.visitante.destroy');
 });

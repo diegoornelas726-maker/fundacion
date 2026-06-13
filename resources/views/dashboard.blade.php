@@ -199,7 +199,11 @@
             </svg>
         </div>
         <div class="welcome-text">
-            <h2>¡Bienvenido, {{ Auth::user()->name }}!</h2>
+            @php
+                $hora = (int) now()->format('H');
+                $saludo = $hora < 12 ? 'Buenos días' : ($hora < 19 ? 'Buenas tardes' : 'Buenas noches');
+            @endphp
+            <h2><span id="saludo">{{ $saludo }}</span>, {{ Auth::user()->name }}!</h2>
             <p>Has iniciado sesión correctamente en el <span>Sistema Administrativo Interno</span> de la Fundación Don Benjamín.</p>
         </div>
     </div>
@@ -278,6 +282,14 @@
     </div>
 
     <script>
+        // Saludo según la hora local del navegador
+        (function () {
+            const el = document.getElementById('saludo');
+            if (!el) return;
+            const h = new Date().getHours();
+            el.textContent = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
+        })();
+
         // Contador animado
         document.querySelectorAll('.stat-number').forEach(function(el) {
             const target = parseInt(el.getAttribute('data-target')) || 0;

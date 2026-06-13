@@ -544,9 +544,117 @@
         }
         [data-theme="light"] .btn-cancel:hover { background: rgba(0,0,0,0.07); color: #18181b; }
         [data-theme="light"] .form-actions { border-top-color: rgba(0,0,0,0.07); }
+
+        /* ─────────── Avatares con iniciales ─────────── */
+        .ui-avatar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--av-size, 32px);
+            height: var(--av-size, 32px);
+            border-radius: 50%;
+            background: var(--av-color, #6366f1);
+            color: #fff;
+            font-size: calc(var(--av-size, 32px) * 0.4);
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            user-select: none;
+        }
+        .name-with-avatar { display: inline-flex; align-items: center; gap: 10px; }
+
+        /* ─────────── Efecto ripple en botones ─────────── */
+        .btn, .btn-primary, .btn-search, .btn-edit, .btn-del,
+        .bulk-btn, .btn-amber, .btn-ghost, .btn-export, .btn-save {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple-ink {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            background: rgba(255,255,255,0.45);
+            pointer-events: none;
+            animation: rippleAnim 0.6s linear;
+        }
+        @keyframes rippleAnim { to { transform: scale(3.2); opacity: 0; } }
+
+        /* ─────────── Orden de columnas ─────────── */
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { color: #a5b4fc; }
+        th.sortable .sort-arrow { opacity: 0.35; margin-left: 4px; font-size: 10px; }
+        th.sortable.asc .sort-arrow, th.sortable.desc .sort-arrow { opacity: 1; color: #818cf8; }
+
+        /* ─────────── Botones de exportar ─────────── */
+        .btn-export {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 14px; border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+            transition: all 0.18s;
+        }
+        .btn-export svg { width: 15px; height: 15px; }
+        .btn-export.pdf {
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.22); color: #fca5a5;
+        }
+        .btn-export.pdf:hover { background: rgba(239,68,68,0.18); }
+        .btn-export.excel {
+            background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.22); color: #86efac;
+        }
+        .btn-export.excel:hover { background: rgba(34,197,94,0.18); }
+
+        /* ─────────── Splash de bienvenida ─────────── */
+        #app-splash {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 18px;
+            background: radial-gradient(circle at 50% 40%, #1a1a2e, #09090b 70%);
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        #app-splash.hide { opacity: 0; visibility: hidden; }
+        .splash-stage { position: relative; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center; }
+        .splash-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #ec4899, #6366f1);
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+                    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+            animation: splashSpin 1.1s linear infinite;
+        }
+        .splash-logo {
+            width: 78px; height: 78px; border-radius: 50%; object-fit: cover;
+            background: #fff; box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+            animation: splashPulse 1.4s ease-in-out infinite;
+        }
+        .splash-text { color: #a1a1aa; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+        @keyframes splashSpin { to { transform: rotate(360deg); } }
+        @keyframes splashPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+        /* ─────────── Confeti ─────────── */
+        #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 9998; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .splash-ring, .splash-logo { animation: none !important; }
+            .ripple-ink { animation-duration: 0.01s; }
+        }
+
+        [data-theme="light"] .btn-export.pdf { background: rgba(239,68,68,0.08); color: #dc2626; }
+        [data-theme="light"] .btn-export.excel { background: rgba(34,197,94,0.1); color: #16a34a; }
     </style>
 </head>
 <body>
+
+    <!-- Splash de bienvenida (una vez por sesión) -->
+    <div id="app-splash">
+        <div class="splash-stage">
+            <div class="splash-ring"></div>
+            <img class="splash-logo" src="{{ asset('images/logo.png') }}" alt="Fundación Don Benjamín">
+        </div>
+        <div class="splash-text">Fundación Don Benjamín</div>
+    </div>
+
+    <!-- Canvas para confeti -->
+    <canvas id="confetti-canvas"></canvas>
 
     <!-- Orbes de fondo -->
     <div class="orb orb-1"></div>
@@ -822,5 +930,130 @@
             </div>
         </div>
     @endif
+
+    @php
+        $fireConfetti = session('success') && preg_match('/registrad|cread|guardad|agregad/i', session('success'));
+    @endphp
+
+    <script>
+        /* ── Splash: mostrar solo una vez por sesión del navegador ── */
+        (function () {
+            const splash = document.getElementById('app-splash');
+            if (!splash) return;
+            if (sessionStorage.getItem('splashShown')) {
+                splash.remove();
+                return;
+            }
+            sessionStorage.setItem('splashShown', '1');
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    splash.classList.add('hide');
+                    setTimeout(() => splash.remove(), 600);
+                }, 1100);
+            });
+        })();
+
+        /* ── Efecto ripple en botones ── */
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn, .btn-primary, .btn-search, .btn-edit, .btn-del, .bulk-btn, .btn-amber, .btn-ghost, .btn-export, .btn-save');
+            if (!btn) return;
+            const rect = btn.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const ink = document.createElement('span');
+            ink.className = 'ripple-ink';
+            ink.style.width = ink.style.height = size + 'px';
+            ink.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ink.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            btn.appendChild(ink);
+            setTimeout(() => ink.remove(), 600);
+        });
+
+        /* ── Búsqueda en vivo (filtra filas de la tabla mientras escribes) ── */
+        document.querySelectorAll('input[name="buscar"]').forEach(function (input) {
+            const card = input.closest('.toolbar')?.parentElement?.querySelector('.table-card');
+            const table = card?.querySelector('table tbody');
+            if (!table) return;
+            input.addEventListener('input', function () {
+                const term = input.value.trim().toLowerCase();
+                table.querySelectorAll('tr').forEach(function (row) {
+                    if (row.querySelector('.empty-state')) return;
+                    const match = row.textContent.toLowerCase().includes(term);
+                    row.style.display = match ? '' : 'none';
+                });
+            });
+        });
+
+        /* ── Ordenar columnas al hacer clic en el encabezado ── */
+        document.querySelectorAll('.table-card table').forEach(function (table) {
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach(function (th, idx) {
+                const label = th.textContent.trim().toLowerCase();
+                if (['acciones', 'asistencia', '#'].includes(label)) return;
+                th.classList.add('sortable');
+                const arrow = document.createElement('span');
+                arrow.className = 'sort-arrow';
+                arrow.textContent = '↕';
+                th.appendChild(arrow);
+                th.addEventListener('click', function () {
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('.empty-state'));
+                    if (!rows.length) return;
+                    const asc = !th.classList.contains('asc');
+                    headers.forEach(h => { h.classList.remove('asc', 'desc'); const a = h.querySelector('.sort-arrow'); if (a) a.textContent = '↕'; });
+                    th.classList.add(asc ? 'asc' : 'desc');
+                    arrow.textContent = asc ? '↑' : '↓';
+                    rows.sort(function (a, b) {
+                        let x = a.children[idx]?.textContent.trim() ?? '';
+                        let y = b.children[idx]?.textContent.trim() ?? '';
+                        const nx = parseFloat(x.replace(/[^0-9.\-]/g, ''));
+                        const ny = parseFloat(y.replace(/[^0-9.\-]/g, ''));
+                        const bothNum = !isNaN(nx) && !isNaN(ny) && x.replace(/[^0-9.,\-\/$\s]/g, '') === x;
+                        let cmp = bothNum ? (nx - ny) : x.localeCompare(y, 'es', { sensitivity: 'base' });
+                        return asc ? cmp : -cmp;
+                    });
+                    rows.forEach(r => tbody.appendChild(r));
+                });
+            });
+        });
+
+        /* ── Confeti (al crear/guardar un registro) ── */
+        @if ($fireConfetti)
+        (function () {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const canvas = document.getElementById('confetti-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+            resize(); window.addEventListener('resize', resize);
+            const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+            const pieces = [];
+            for (let i = 0; i < 140; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: -20 - Math.random() * canvas.height * 0.5,
+                    w: 6 + Math.random() * 6, h: 8 + Math.random() * 8,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: 2 + Math.random() * 3, vx: -1.5 + Math.random() * 3,
+                    rot: Math.random() * 6.28, vr: -0.2 + Math.random() * 0.4,
+                });
+            }
+            let frames = 0;
+            (function frame() {
+                frames++;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(function (p) {
+                    p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+                    ctx.save();
+                    ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+                if (frames < 220) requestAnimationFrame(frame);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            })();
+        })();
+        @endif
+    </script>
 </body>
 </html>

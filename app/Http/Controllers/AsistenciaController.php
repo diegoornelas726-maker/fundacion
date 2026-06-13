@@ -133,6 +133,30 @@ class AsistenciaController extends Controller
     }
 
     /**
+     * Resumen de porcentaje de asistencia por beneficiario.
+     */
+    public function personas()
+    {
+        $personas = Beneficiario::query()
+            ->withCount([
+                'asistencias as total_dias',
+                'asistencias as dias_presente' => fn ($q) => $q->where('presente', true),
+            ])
+            ->orderBy('nombre')
+            ->orderBy('apellido_paterno')
+            ->get()
+            ->map(function ($b) {
+                $b->porcentaje = $b->total_dias > 0
+                    ? round($b->dias_presente / $b->total_dias * 100)
+                    : 0;
+
+                return $b;
+            });
+
+        return view('asistencia.personas', ['personas' => $personas]);
+    }
+
+    /**
      * Exporta la lista de asistencia del día a PDF.
      */
     public function pdf(Request $request)

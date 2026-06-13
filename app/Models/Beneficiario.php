@@ -33,4 +33,9 @@ class Beneficiario extends Model
     {
         return $this->hasMany(Apoyo::class);
     }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class);
+    }
 }
