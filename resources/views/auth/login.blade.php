@@ -612,7 +612,8 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .mascot, .mascot-body, .mascot-antenna::before { animation: none !important; }
+            .mascot { animation: none !important; opacity: 1 !important; transform: none !important; }
+            .mascot-body, .mascot-antenna::before { animation: none !important; }
         }
     </style>
 </head>
