@@ -273,6 +273,34 @@
 
         .field input::placeholder { color: #3f3f46; }
 
+        /* ── Mostrar / ocultar contraseña ── */
+        .password-wrap { position: relative; }
+        .password-wrap input { padding-right: 44px; }
+
+        .toggle-pass {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: none;
+            color: #52525b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .toggle-pass:hover { color: #a5b4fc; background: rgba(255,255,255,0.05); }
+        .toggle-pass svg { width: 18px; height: 18px; }
+        .toggle-pass .icon-hide { display: none; }
+        .toggle-pass.is-visible .icon-show { display: none; }
+        .toggle-pass.is-visible .icon-hide { display: block; }
+
         .field-error {
             font-size: 12px;
             color: #f87171;
@@ -384,6 +412,237 @@
             from { opacity: 0; }
             to   { opacity: 1; }
         }
+
+        /* ════════════════════════════════════════════
+           MONITO INTERACTIVO (robot)
+           ════════════════════════════════════════════ */
+        .mascot {
+            position: relative;
+            width: 132px;
+            height: 124px;
+            margin-bottom: 18px;
+            opacity: 0;
+            animation: slideDown 0.7s cubic-bezier(.22,.68,0,1.3) 0.1s forwards;
+            z-index: 11;
+        }
+
+        /* Flota suavemente */
+        .mascot-body {
+            position: absolute;
+            inset: 0;
+            animation: mascotFloat 4s ease-in-out infinite;
+            transform-origin: 50% 90%;
+        }
+
+        @keyframes mascotFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-6px) rotate(0.5deg); }
+        }
+
+        /* Antena */
+        .mascot-antenna {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            width: 3px;
+            height: 16px;
+            background: rgba(255,255,255,0.25);
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        .mascot-antenna::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #818cf8, #4f46e5);
+            transform: translateX(-50%);
+            box-shadow: 0 0 12px rgba(99,102,241,0.9);
+            animation: antennaPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes antennaPulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(99,102,241,0.6); }
+            50%      { box-shadow: 0 0 18px rgba(99,102,241,1); }
+        }
+
+        /* Orejas / audífonos */
+        .mascot-ear {
+            position: absolute;
+            top: 46px;
+            width: 14px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #3730a3, #1e3a8a);
+            z-index: 1;
+        }
+        .mascot-ear.left  { left: 4px; }
+        .mascot-ear.right { right: 4px; }
+
+        /* Cabeza */
+        .mascot-head {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 96px;
+            border-radius: 30px;
+            background: linear-gradient(150deg, #4f46e5 0%, #3b82f6 100%);
+            box-shadow:
+                0 10px 30px rgba(79,70,229,0.45),
+                inset 0 2px 4px rgba(255,255,255,0.25),
+                inset 0 -6px 12px rgba(0,0,0,0.25);
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        /* Visor / cara */
+        .mascot-face {
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84px;
+            height: 50px;
+            border-radius: 22px;
+            background: radial-gradient(circle at 50% 40%, #1e1b4b 0%, #0b1020 100%);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        .mascot-eye {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #f8fafc;
+            position: relative;
+            box-shadow: 0 0 10px rgba(165,180,252,0.7);
+            transition: height 0.18s ease, transform 0.18s ease;
+        }
+
+        .mascot-pupil {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #1e293b;
+            transform: translate(-50%, -50%);
+            transition: transform 0.12s ease-out;
+        }
+        .mascot-pupil::after {
+            content: '';
+            position: absolute;
+            top: 1.5px;
+            right: 1.5px;
+            width: 3.5px;
+            height: 3.5px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        /* Boca */
+        .mascot-mouth {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 26px;
+            height: 8px;
+            border-radius: 0 0 14px 14px;
+            background: #1e1b4b;
+            box-shadow: inset 0 -2px 3px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            z-index: 3;
+        }
+
+        /* Mejillas (aparecen al celebrar) */
+        .mascot-cheek {
+            position: absolute;
+            top: 52px;
+            width: 12px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(244,114,182,0.0);
+            transition: background 0.25s ease;
+            z-index: 3;
+        }
+        .mascot-cheek.left  { left: 18px; }
+        .mascot-cheek.right { right: 18px; }
+
+        /* Manos */
+        .mascot-hand {
+            position: absolute;
+            top: 56px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #4338ca, #2563eb);
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), 0 4px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            z-index: 4;
+            transition: transform 0.42s cubic-bezier(.34,1.56,.64,1), opacity 0.25s ease;
+        }
+        .mascot-hand.left  { left: 8px;  transform: translateY(40px) scale(0.5); }
+        .mascot-hand.right { right: 8px; transform: translateY(40px) scale(0.5); }
+
+        /* ── Estado: tapándose los ojos (contraseña) ── */
+        .mascot.covering .mascot-hand.left  { opacity: 1; transform: translate(20px, -12px) scale(1); }
+        .mascot.covering .mascot-hand.right { opacity: 1; transform: translate(-20px, -12px) scale(1); }
+        .mascot.covering .mascot-eye        { height: 4px; }
+        .mascot.covering .mascot-mouth      { width: 16px; height: 5px; }
+
+        /* Espía un poquito cuando hay error en la contraseña */
+        .mascot.peeking .mascot-hand.left  { transform: translate(20px, -4px) scale(1); }
+        .mascot.peeking .mascot-hand.right { transform: translate(-20px, -4px) scale(1); }
+        .mascot.peeking .mascot-eye        { height: 14px; }
+
+        /* ── Estado: celebración / saludo ── */
+        .mascot.celebrate .mascot-body { animation: mascotHop 0.6s ease 2; }
+        .mascot.celebrate .mascot-mouth {
+            height: 16px;
+            width: 30px;
+            border-radius: 0 0 16px 16px;
+            background: #1e1b4b;
+        }
+        .mascot.celebrate .mascot-eye { height: 6px; }
+        .mascot.celebrate .mascot-cheek { background: rgba(244,114,182,0.55); }
+        .mascot.celebrate .mascot-hand.left {
+            opacity: 1;
+            transform: translate(-6px, -34px) rotate(-25deg) scale(1);
+            animation: waveLeft 0.45s ease-in-out 3;
+        }
+        .mascot.celebrate .mascot-hand.right {
+            opacity: 1;
+            transform: translate(6px, -34px) rotate(25deg) scale(1);
+            animation: waveRight 0.45s ease-in-out 3;
+        }
+
+        @keyframes mascotHop {
+            0%, 100% { transform: translateY(0); }
+            40%      { transform: translateY(-16px); }
+            70%      { transform: translateY(0); }
+        }
+        @keyframes waveLeft {
+            0%, 100% { transform: translate(-6px, -34px) rotate(-25deg) scale(1); }
+            50%      { transform: translate(-10px, -38px) rotate(-45deg) scale(1.05); }
+        }
+        @keyframes waveRight {
+            0%, 100% { transform: translate(6px, -34px) rotate(25deg) scale(1); }
+            50%      { transform: translate(10px, -38px) rotate(45deg) scale(1.05); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .mascot { animation: none !important; opacity: 1 !important; transform: none !important; }
+            .mascot-body, .mascot-antenna::before { animation: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -398,11 +657,24 @@
 
     <div class="wrapper {{ $errors->any() ? 'has-error' : '' }}">
 
-        <!-- Badge: baja desde arriba -->
-        <div class="badge">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V9l9-6 9 6v12M9 21V12h6v9"/>
-            </svg>
+        <!-- Monito interactivo (robot) -->
+        <div class="mascot" id="mascot">
+            <div class="mascot-body">
+                <div class="mascot-antenna"></div>
+                <div class="mascot-ear left"></div>
+                <div class="mascot-ear right"></div>
+                <div class="mascot-head">
+                    <div class="mascot-face">
+                        <div class="mascot-eye left"><div class="mascot-pupil"></div></div>
+                        <div class="mascot-eye right"><div class="mascot-pupil"></div></div>
+                    </div>
+                    <div class="mascot-cheek left"></div>
+                    <div class="mascot-cheek right"></div>
+                    <div class="mascot-mouth"></div>
+                </div>
+                <div class="mascot-hand left"></div>
+                <div class="mascot-hand right"></div>
+            </div>
         </div>
 
         <!-- Título: desde la izquierda -->
@@ -436,9 +708,20 @@
 
                 <div class="field">
                     <label for="password">Contraseña</label>
-                    <input id="password" type="password" name="password"
-                           placeholder="••••••••"
-                           required autocomplete="current-password">
+                    <div class="password-wrap">
+                        <input id="password" type="password" name="password"
+                               placeholder="••••••••"
+                               required autocomplete="current-password">
+                        <button type="button" class="toggle-pass" id="toggle-pass" aria-label="Mostrar contraseña" title="Mostrar contraseña">
+                            <svg class="icon-show" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                            </svg>
+                            <svg class="icon-hide" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>
+                            </svg>
+                        </button>
+                    </div>
                     @error('password')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
@@ -475,11 +758,100 @@
     </div>
 
     <script>
+        // ════════════════════════════════════════════
+        //  MONITO INTERACTIVO
+        // ════════════════════════════════════════════
+        (function () {
+            const mascot   = document.getElementById('mascot');
+            if (!mascot) return;
+
+            const pupils   = mascot.querySelectorAll('.mascot-pupil');
+            const emailEl  = document.getElementById('email');
+            const passEl   = document.getElementById('password');
+
+            // 'cursor' = sigue el mouse | 'input' = mira el campo | 'hidden' = tapado
+            let mode = 'cursor';
+            const MAX = 5; // desplazamiento máximo de las pupilas (px)
+
+            function setPupils(dx, dy) {
+                pupils.forEach(p => {
+                    p.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                });
+            }
+
+            function pointAt(x, y) {
+                const r  = mascot.getBoundingClientRect();
+                const cx = r.left + r.width / 2;
+                const cy = r.top + r.height / 2.4;
+                let dx = x - cx, dy = y - cy;
+                const dist = Math.hypot(dx, dy) || 1;
+                const k = Math.min(MAX, dist / 16) / dist;
+                setPupils(dx * k, dy * k);
+            }
+
+            function lookAt(el) {
+                const r = el.getBoundingClientRect();
+                pointAt(r.left + r.width / 2, r.top + r.height / 2);
+            }
+
+            // 1) Los ojos siguen el cursor
+            document.addEventListener('mousemove', e => {
+                if (mode === 'cursor') pointAt(e.clientX, e.clientY);
+            });
+
+            // 2) Mira fijamente el campo de correo mientras escribes
+            if (emailEl) {
+                emailEl.addEventListener('focus', () => { mode = 'input'; lookAt(emailEl); });
+                emailEl.addEventListener('input', () => { if (mode === 'input') lookAt(emailEl); });
+                emailEl.addEventListener('blur',  () => { if (mode === 'input') mode = 'cursor'; });
+            }
+
+            // 3) Se tapa los ojos al escribir la contraseña
+            if (passEl) {
+                passEl.addEventListener('focus', () => { mode = 'hidden'; mascot.classList.add('covering'); });
+                passEl.addEventListener('blur',  () => { mascot.classList.remove('covering', 'peeking'); mode = 'cursor'; });
+            }
+
+            // 3b) Mostrar / ocultar contraseña + reacción del monito (espía entre los dedos)
+            const toggle = document.getElementById('toggle-pass');
+            if (toggle && passEl) {
+                toggle.addEventListener('click', () => {
+                    const show = passEl.type === 'password';
+                    passEl.type = show ? 'text' : 'password';
+                    toggle.classList.toggle('is-visible', show);
+                    const label = show ? 'Ocultar contraseña' : 'Mostrar contraseña';
+                    toggle.setAttribute('aria-label', label);
+                    toggle.setAttribute('title', label);
+                    if (show) {
+                        mascot.classList.add('peeking'); // espía: ya puede ver la contraseña
+                    } else {
+                        mascot.classList.remove('peeking');
+                    }
+                    passEl.focus();
+                });
+            }
+
+            // 4) Saludo / celebración al iniciar sesión
+            window.mascotCelebrate = function () {
+                mascot.classList.remove('covering', 'peeking');
+                mode = 'celebrate';
+                setPupils(0, 0);
+                mascot.classList.add('celebrate');
+            };
+
+            // Si hubo error de credenciales, el monito "espía" entre los dedos
+            @if ($errors->any())
+                mascot.classList.add('covering', 'peeking');
+                setTimeout(() => mascot.classList.remove('covering', 'peeking'), 1600);
+            @endif
+        })();
+
         // Spinner al enviar formulario
         document.getElementById('login-form').addEventListener('submit', function() {
             const btn = document.getElementById('submit-btn');
             btn.classList.add('loading');
             btn.disabled = true;
+            if (typeof window.mascotCelebrate === 'function') window.mascotCelebrate();
         });
 
         // Generar partículas flotantes (igual que welcome)

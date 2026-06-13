@@ -63,6 +63,31 @@
             cursor: default;
         }
 
+        .stats-grid { perspective: 1000px; }
+
+        .stat-card {
+            position: relative;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* Brillo que sigue al cursor */
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            pointer-events: none;
+            background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%),
+                        rgba(99,102,241,0.16), transparent 45%);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            z-index: 0;
+        }
+
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card > * { position: relative; z-index: 1; }
+
         .stat-card:hover {
             border-color: rgba(99,102,241,0.25);
             transform: translateY(-3px);
@@ -249,5 +274,26 @@
                 bar.style.width = bar.getAttribute('data-width') + '%';
             });
         }, 300);
+
+        // Tilt 3D + brillo que sigue al cursor
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reduceMotion) {
+            document.querySelectorAll('.stat-card').forEach(function(card) {
+                card.addEventListener('mousemove', function(e) {
+                    const r  = card.getBoundingClientRect();
+                    const px = (e.clientX - r.left) / r.width;
+                    const py = (e.clientY - r.top)  / r.height;
+                    card.style.setProperty('--mx', (px * 100) + '%');
+                    card.style.setProperty('--my', (py * 100) + '%');
+                    card.style.transition = 'transform 0.05s linear';
+                    card.style.transform =
+                        `perspective(900px) rotateX(${(0.5 - py) * 9}deg) rotateY(${(px - 0.5) * 9}deg) translateY(-4px)`;
+                });
+                card.addEventListener('mouseleave', function() {
+                    card.style.transition = 'transform 0.4s cubic-bezier(.22,.68,0,1.2)';
+                    card.style.transform  = '';
+                });
+            });
+        }
     </script>
 </x-app-layout>
