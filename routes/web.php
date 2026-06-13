@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('beneficiarios', BeneficiarioController::class);
 });
 Route::resource('apoyos', ApoyoController::class)->except(['show']);
-Route::resource('actividades', ActividadController::class)->except(['show']);
+Route::resource('actividades', ActividadController::class)
+    ->parameters(['actividades' => 'actividad'])
+    ->except(['show']);
 
 require __DIR__.'/auth.php';
