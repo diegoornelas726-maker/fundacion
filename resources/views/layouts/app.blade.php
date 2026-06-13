@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Fundación Don Benjamín') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <script>
         // Aplica el tema guardado antes de pintar (evita el parpadeo)
@@ -145,22 +146,34 @@
         .nav-logo:hover { opacity: 0.85; }
 
         .nav-logo-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            background: linear-gradient(145deg, #4f46e5, #3b82f6);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.3);
-            transition: box-shadow 0.2s;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.25);
+            transition: box-shadow 0.25s, transform 0.25s;
+            animation: logoFloat 4s ease-in-out infinite;
         }
 
         .nav-logo:hover .nav-logo-icon {
-            box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 4px 14px rgba(79,70,229,0.35);
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.5), 0 6px 18px rgba(79,70,229,0.35);
+            transform: scale(1.08) rotate(-4deg);
         }
 
-        .nav-logo-icon svg { width: 18px; height: 18px; color: #fff; }
+                .nav-logo-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .nav-logo-icon { animation: none !important; }
+        }
 
         .nav-logo-text {
             font-size: 14px;
@@ -485,6 +498,52 @@
         [data-theme="light"] .btn-search:hover { background: rgba(0,0,0,0.07); color: #18181b; }
         [data-theme="light"] .empty-state p { color: #71717a; }
         [data-theme="light"] .pagination-wrap { border-top-color: rgba(0,0,0,0.07); }
+
+        /* Formularios (crear/editar) y perfil */
+        [data-theme="light"] .form-card,
+        [data-theme="light"] .profile-card {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(0,0,0,0.07);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .card-title { color: #18181b; }
+        [data-theme="light"] .card-desc,
+        [data-theme="light"] .field-note { color: #71717a; }
+        [data-theme="light"] .divider { background: rgba(0,0,0,0.08); }
+        [data-theme="light"] .section-label {
+            color: #71717a;
+            border-bottom-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .field label { color: #52525b; }
+        [data-theme="light"] .field input,
+        [data-theme="light"] .field select,
+        [data-theme="light"] .field textarea {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.1);
+            color: #18181b;
+        }
+        [data-theme="light"] .field input::placeholder,
+        [data-theme="light"] .field textarea::placeholder { color: #a1a1aa; }
+        [data-theme="light"] .field select option { background: #fff; }
+        [data-theme="light"] .field input:focus,
+        [data-theme="light"] .field select:focus,
+        [data-theme="light"] .field textarea:focus {
+            background: #fff;
+            border-color: #6366f1;
+        }
+        [data-theme="light"] .tipo-chip {
+            background: rgba(99,102,241,0.08);
+            border-color: rgba(99,102,241,0.2);
+            color: #4f46e5;
+        }
+        [data-theme="light"] .tipo-chip:hover { background: rgba(99,102,241,0.16); color: #4338ca; }
+        [data-theme="light"] .btn-cancel {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.1);
+            color: #52525b;
+        }
+        [data-theme="light"] .btn-cancel:hover { background: rgba(0,0,0,0.07); color: #18181b; }
+        [data-theme="light"] .form-actions { border-top-color: rgba(0,0,0,0.07); }
     </style>
 </head>
 <body>
@@ -502,9 +561,7 @@
 
             <a href="{{ route('dashboard') }}" class="nav-logo">
                 <div class="nav-logo-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 21V9l9-6 9 6v12M9 21V12h6v9"/>
-                    </svg>
+                    <img src="{{ asset('images/logo.png') }}" alt="Fundación Don Benjamín">
                 </div>
                 <span class="nav-logo-text">Fundación Don Benjamín</span>
             </a>
