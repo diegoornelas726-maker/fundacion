@@ -164,7 +164,7 @@
             transform: scale(1.08) rotate(-4deg);
         }
 
-        .nav-logo-icon img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+        .nav-logo-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         @keyframes logoFloat {
             0%, 100% { transform: translateY(0); }
