@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Actividad;
 use App\Models\Apoyo;
+use App\Models\Asistencia;
 use App\Models\Beneficiario;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
@@ -29,54 +31,73 @@ class ExportController extends Controller
             $query->where('estado', $request->estado);
         }
 
+        // Filtro Temporal Simplificado (Día o Mes)
+        $tipo = $request->input('tipo_periodo', 'mes');
+        $periodo = $request->input('periodo');
+        $tituloPeriodo = 'Reporte';
+
+        if ($periodo) {
+            if ($tipo === 'dia') {
+                $query->whereDate('created_at', $periodo);
+                $tituloPeriodo = 'Día ' . Carbon::parse($periodo)->format('d-m-Y');
+            } else {
+                $query->whereYear('created_at', substr($periodo, 0, 4))
+                      ->whereMonth('created_at', substr($periodo, 5, 2));
+                $parsed = $this->parseMes($periodo);
+                $tituloPeriodo = $parsed ? $parsed->locale('es')->isoFormat('MMMM [de] YYYY') : $periodo;
+            }
+        }
+
         $rows = $query->latest()->get();
+        $formato = $request->input('formato', 'pdf');
 
-        $columnas = ['#', 'Nombre completo', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Registro'];
-        $filas = $rows->map(fn ($b) => [
-            $b->id,
-            $b->nombre_completo,
-            $b->curp ?? '—',
-            $b->telefono ?? '—',
-            $b->colonia ?? '—',
-            $b->estado,
-            optional($b->created_at)->format('d/m/Y'),
-        ])->all();
+        if ($formato === 'excel') {
+            $columnas = ['#', 'Nombre completo', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Fecha Registro'];
+            $filas = [];
+            foreach ($rows as $r) {
+                $filas[] = [
+                    $r->id,
+                    "$r->nombre $r->apellido_paterno $r->apellido_materno",
+                    $r->curp,
+                    $r->telefono,
+                    $r->colonia,
+                    $r->estado,
+                    $r->created_at->format('d/m/Y')
+                ];
+            }
+            return $this->csv($columnas, $filas, 'beneficiarios_' . $tipo . '_' . $periodo);
+        }
 
-        return $this->salida($request, 'Listado de beneficiarios', $columnas, $filas, 'beneficiarios');
+        $pdf = Pdf::loadView('beneficiarios.pdf', [
+            'beneficiarios' => $rows, 
+            'mes' => $tituloPeriodo
+        ]);
+
+        return $pdf->download('beneficiarios_' . $tipo . '_' . $periodo . '.pdf');
     }
 
     public function apoyos(Request $request)
     {
-        $query = Apoyo::with('beneficiario');
+        $query = Apoyo::query();
 
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(function ($q) use ($b) {
-                $q->where('tipo_apoyo', 'like', "%$b%")
-                    ->orWhereHas('beneficiario', fn ($q2) => $q2->where('nombre', 'like', "%$b%")
-                        ->orWhere('apellido_paterno', 'like', "%$b%"));
+                $q->where('nombre', 'like', "%$b%")
+                    ->orWhere('tipo', 'like', "%$b%")
+                    ->orWhere('descripcion', 'like', "%$b%");
             });
         }
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+
+        $rows = $query->latest()->get();
+
+        $columnas = ['#', 'Nombre del apoyo', 'Tipo', 'Descripción', 'Cantidad', 'Fecha Registro'];
+        $filas = [];
+        foreach ($rows as $r) {
+            $filas[] = [$r->id, $r->nombre, $r->tipo, $r->descripcion, $r->cantidad, $r->created_at->format('d/m/Y')];
         }
-        if ($request->filled('tipo')) {
-            $query->where('tipo_apoyo', $request->tipo);
-        }
 
-        $rows = $query->latest('fecha_apoyo')->get();
-
-        $columnas = ['#', 'Beneficiario', 'Tipo de apoyo', 'Fecha', 'Monto', 'Estado'];
-        $filas = $rows->map(fn ($a) => [
-            $a->id,
-            $a->beneficiario?->nombre_completo ?? '—',
-            $a->tipo_apoyo,
-            optional($a->fecha_apoyo)->format('d/m/Y'),
-            $a->monto ? '$'.number_format($a->monto, 2) : '—',
-            $a->estado,
-        ])->all();
-
-        return $this->salida($request, 'Listado de apoyos', $columnas, $filas, 'apoyos');
+        return $this->descargarPdfOCsv($rows, 'apoyos.pdf', $columnas, $filas, 'apoyos_reporte', $request->input('mes'));
     }
 
     public function actividades(Request $request)
@@ -86,54 +107,82 @@ class ExportController extends Controller
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(function ($q) use ($b) {
-                $q->where('titulo', 'like', "%$b%")
-                    ->orWhere('lugar', 'like', "%$b%")
-                    ->orWhere('responsable', 'like', "%$b%");
+                $q->where('nombre', 'like', "%$b%")
+                    ->orWhere('descripcion', 'like', "%$b%")
+                    ->orWhere('lugar', 'like', "%$b%");
             });
         }
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+        if ($request->filled('mes')) {
+            $mes = $this->parseMes($request->mes);
+            if ($mes) {
+                $query->whereYear('fecha', $mes->year)
+                    ->whereMonth('fecha', $mes->month);
+            }
         }
-        if ($request->filled('tipo')) {
-            $query->where('tipo', $request->tipo);
+
+        $rows = $query->latest()->get();
+
+        $columnas = ['#', 'Nombre de la actividad', 'Descripción', 'Fecha', 'Hora', 'Lugar', 'Cupo'];
+        $filas = [];
+        foreach ($rows as $r) {
+            $filas[] = [$r->id, $r->nombre, $r->descripcion, Carbon::parse($r->fecha)->format('d/m/Y'), $r->hora, $r->lugar, $r->cupo];
         }
 
-        $rows = $query->orderBy('fecha_inicio', 'desc')->get();
-
-        $columnas = ['#', 'Título', 'Tipo', 'Fecha inicio', 'Fecha fin', 'Lugar', 'Responsable', 'Estado'];
-        $filas = $rows->map(fn ($a) => [
-            $a->id,
-            $a->titulo,
-            $a->tipo ?? '—',
-            optional($a->fecha_inicio)->format('d/m/Y'),
-            $a->fecha_fin ? $a->fecha_fin->format('d/m/Y') : '—',
-            $a->lugar ?? '—',
-            $a->responsable ?? '—',
-            $a->estado,
-        ])->all();
-
-        return $this->salida($request, 'Listado de actividades', $columnas, $filas, 'actividades');
+        return $this->descargarPdfOCsv($rows, 'actividades.pdf', $columnas, $filas, 'actividades_reporte', $request->input('mes'));
     }
 
-    private function salida(Request $request, string $titulo, array $columnas, array $filas, string $slug)
+    public function asistencia(Request $request)
     {
-        if ($request->input('formato') === 'excel') {
+        $query = Asistencia::query()->with('beneficiario');
+
+        if ($request->filled('fecha')) {
+            $query->whereDate('fecha', $request->fecha);
+        } else {
+            $query->whereDate('fecha', Carbon::today());
+        }
+
+        $rows = $query->get();
+
+        $columnas = ['#', 'Nombre', 'Tipo', 'Estado', 'Fecha'];
+        $filas = [];
+        foreach ($rows as $i => $r) {
+            $nombre = $r->beneficiario_id ? ($r->beneficiario->nombre.' '.$r->beneficiario->apellido_paterno) : $r->nombre_visitante;
+            $tipo = $r->beneficiario_id ? 'Beneficiario' : 'Visitante';
+            $estado = $r->presente ? 'Presente' : 'Ausente';
+            $filas[] = [$i + 1, $nombre, $tipo, $estado, Carbon::parse($r->fecha)->format('d/m/Y')];
+        }
+
+        $fechaTitulo = Carbon::parse($request->input('fecha', Carbon::today()))->locale('es')->isoFormat('dddd, D [de] MMMM YYYY');
+
+        return $this->descargarPdfOCsv($rows, 'asistencia.pdf', $columnas, $filas, 'asistencia_reporte', $fechaTitulo);
+    }
+
+    private function descargarPdfOCsv($rows, string $view, array $columnas, array $filas, string $slug, ?string $mes): mixed
+    {
+        $formato = request('formato', 'pdf');
+
+        if ($formato === 'excel') {
             return $this->csv($columnas, $filas, $slug);
         }
 
-        $pdf = Pdf::loadView('exports.tabla', compact('titulo', 'columnas', 'filas'))
-            ->setPaper('a4', count($columnas) > 6 ? 'landscape' : 'portrait');
+        $titulo = $this->tituloConMes(ucfirst(str_replace('_reporte', '', $slug)), $mes);
 
-        return $pdf->download($slug.'-'.now()->format('Y-m-d').'.pdf');
+        $pdf = Pdf::loadView($view, [
+            str_replace('.pdf', '', $view) => $rows,
+            'mes' => $titulo,
+        ]);
+
+        $suffix = $mes ? '_'.str_replace(' ', '_', $mes) : '';
+
+        return $pdf->download($slug.$suffix.'.pdf');
     }
 
     private function csv(array $columnas, array $filas, string $slug): StreamedResponse
     {
-        $filename = $slug.'-'.now()->format('Y-m-d').'.csv';
+        $filename = $slug.'.csv';
 
         return response()->streamDownload(function () use ($columnas, $filas) {
             $out = fopen('php://output', 'w');
-            // BOM para que Excel reconozca UTF-8 (acentos)
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, $columnas);
             foreach ($filas as $fila) {
@@ -141,5 +190,30 @@ class ExportController extends Controller
             }
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function tituloConMes(string $base, ?string $mes): string
+    {
+        if (! $mes) {
+            return $base;
+        }
+
+        $parsed = $this->parseMes($mes);
+        if (! $parsed) {
+            return $base;
+        }
+
+        $nombreMes = $parsed->locale('es')->isoFormat('MMMM [de] YYYY');
+
+        return $base.' — '.ucfirst($nombreMes);
+    }
+
+    private function parseMes(?string $value): ?Carbon
+    {
+        if (! $value || ! preg_match('/^\d{4}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        return Carbon::createFromFormat('Y-m', $value)->startOfMonth();
     }
 }

@@ -4,9 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Beneficiario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class BeneficiarioController extends Controller
 {
+    private function aplicarFiltroTemporal($query, Request $request)
+    {
+        $tipo = $request->input('tipo_periodo', 'mes');
+        $periodo = $request->input('periodo');
+
+        if (!$periodo) {
+            $periodo = $tipo === 'dia' ? date('Y-m-d') : date('Y-m');
+        }
+
+        if ($tipo === 'dia') {
+            $query->whereDate('created_at', $periodo);
+        } else {
+            // Rango mensual (YYYY-MM)
+            $year = substr($periodo, 0, 4);
+            $month = substr($periodo, 5, 2);
+            $query->whereYear('created_at', $year)
+                  ->whereMonth('created_at', $month);
+        }
+
+        return $query;
+    }
+
     public function index(Request $request)
     {
         $query = Beneficiario::query();
@@ -25,6 +48,8 @@ class BeneficiarioController extends Controller
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
+
+        $query = $this->aplicarFiltroTemporal($query, $request);
 
         $beneficiarios = $query->latest()->paginate(15)->withQueryString();
 

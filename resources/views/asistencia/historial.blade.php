@@ -4,7 +4,40 @@
     </x-slot>
 
     <style>
-        .hist-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .hist-top { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .month-input {
+            padding: 9px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 10px;
+            color: #f4f4f5;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13.5px;
+            outline: none;
+            transition: border-color 0.18s;
+        }
+        .month-input:focus { border-color: rgba(99,102,241,0.5); }
+        
+        /* Ajuste estético para el calendario en el tema oscuro */
+        .month-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
         .btn {
             display: inline-flex; align-items: center; gap: 7px;
             padding: 9px 16px; border-radius: 10px;
@@ -21,6 +54,8 @@
             border-radius: 16px; overflow: hidden; backdrop-filter: blur(12px);
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
+        
+        .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         thead th { text-align: left; padding: 13px 20px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #52525b; border-bottom: 1px solid rgba(255,255,255,0.06); }
         tbody td { padding: 13px 20px; font-size: 13.5px; color: #d4d4d8; border-bottom: 1px solid rgba(255,255,255,0.04); }
@@ -47,10 +82,16 @@
         [data-theme="light"] .td-date { color: #18181b; }
         [data-theme="light"] tbody tr:hover { background: rgba(0,0,0,0.02); }
         [data-theme="light"] .btn-ghost { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #3f3f46; }
+        [data-theme="light"] .month-input { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); color: #18181b; }
+        [data-theme="light"] .month-input::-webkit-calendar-picker-indicator { filter: none; }
     </style>
 
     <div class="hist-top">
-        <p style="color:#71717a; font-size:13.5px;">Asistencias registradas por día.</p>
+        <form method="GET" action="{{ route('asistencia.historial') }}" class="filter-group">
+            <input type="month" name="mes" value="{{ request('mes', date('Y-m')) }}" class="month-input" onchange="this.form.submit()">
+            <p style="color:#71717a; font-size:13.5px; margin: 0 0 0 4px;">Asistencias registradas.</p>
+        </form>
+        
         <a href="{{ route('asistencia.index') }}" class="btn btn-ghost">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
@@ -60,37 +101,45 @@
     </div>
 
     <div class="table-card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Presentes</th>
-                    <th>Registros</th>
-                    <th class="th-right">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($fechas as $f)
-                    @php $fc = \Illuminate\Support\Carbon::parse($f->fecha); @endphp
+        <div class="table-wrap">
+            <table>
+                <thead>
                     <tr>
-                        <td class="td-date">{{ $fc->locale('es')->isoFormat('dddd, D [de] MMMM YYYY') }}</td>
-                        <td><span class="pill {{ $f->presentes > 0 ? 'pill-green' : 'pill-gray' }}">{{ $f->presentes }} presentes</span></td>
-                        <td>{{ $f->total }}</td>
-                        <td class="td-right">
-                            <div class="row-actions">
-                                <a href="{{ route('asistencia.index', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-view">Ver / editar</a>
-                                <a href="{{ route('asistencia.pdf', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-pdf">PDF</a>
-                            </div>
-                        </td>
+                        <th>Fecha</th>
+                        <th>Presentes</th>
+                        <th>Registros</th>
+                        <th class="th-right">Acciones</th>
                     </tr>
-                @empty
-                    <tr><td colspan="4"><div class="empty-state">Aún no hay asistencias registradas.</div></td></tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @forelse ($fechas as $f)
+                        @php $fc = \Illuminate\Support\Carbon::parse($f->fecha); @endphp
+                        <tr>
+                            <td class="td-date">{{ $fc->locale('es')->isoFormat('dddd, D [de] MMMM YYYY') }}</td>
+                            <td><span class="pill {{ $f->presentes > 0 ? 'pill-green' : 'pill-gray' }}">{{ $f->presentes }} presentes</span></td>
+                            <td>{{ $f->total }}</td>
+                            <td class="td-right">
+                                <div class="row-actions">
+                                    <a href="{{ route('asistencia.index', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-view">Ver / editar</a>
+                                    <a href="{{ route('asistencia.pdf', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-pdf">PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    Aún no hay asistencias registradas en este período.
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         @if ($fechas->hasPages())
-            <div class="pagination-wrap">{{ $fechas->links() }}</div>
+            <div class="pagination-wrap">{{ $fechas->appends(request()->query())->links() }}</div>
         @endif
     </div>
 </x-app-layout>

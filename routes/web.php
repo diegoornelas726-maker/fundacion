@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::get('exportar/beneficiarios', [ExportController::class, 'beneficiarios'])->name('beneficiarios.export');
     Route::get('exportar/apoyos', [ExportController::class, 'apoyos'])->name('apoyos.export');
     Route::get('exportar/actividades', [ExportController::class, 'actividades'])->name('actividades.export');
+    Route::get('exportar/asistencia', [ExportController::class, 'asistencia'])->name('asistencia.export');
     Route::post('asistencia/visitante', [AsistenciaController::class, 'storeVisitante'])->name('asistencia.visitante.store');
     Route::delete('asistencia/visitante/{asistencia}', [AsistenciaController::class, 'destroyVisitante'])->name('asistencia.visitante.destroy');
 });

@@ -13,9 +13,9 @@
             margin-bottom: 20px;
         }
 
-        .search-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .search-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
-        .search-input, .filter-select {
+        .search-input, .filter-select, .month-input {
             padding: 9px 14px;
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.09);
@@ -29,8 +29,14 @@
 
         .search-input { min-width: 220px; }
         .search-input::placeholder { color: #3f3f46; }
-        .search-input:focus, .filter-select:focus { border-color: rgba(99,102,241,0.5); }
+        .search-input:focus, .filter-select:focus, .month-input:focus { border-color: rgba(99,102,241,0.5); }
         .filter-select option { background: #18181a; }
+
+        /* Ajuste estético para el calendario en el tema oscuro */
+        .month-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
 
         .btn {
             display: inline-flex;
@@ -67,6 +73,27 @@
         }
 
         .btn-search:hover { background: rgba(255,255,255,0.1); color: #e4e4e7; }
+
+        /* Estilos unificados para los botones de exportación */
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.18s;
+            border: none;
+        }
+        .btn-export svg { width: 15px; height: 15px; }
+        .btn-export.pdf { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+        .btn-export.pdf:hover { background: rgba(239,68,68,0.18); }
+        .btn-export.excel { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
+        .btn-export.excel:hover { background: rgba(34,197,94,0.18); }
 
         .alert {
             display: flex;
@@ -194,8 +221,6 @@
         }
     </style>
 
-
-
     <div class="toolbar">
         <form class="search-group" method="GET" action="{{ route('apoyos.index') }}">
             <input class="search-input" type="text" name="buscar"
@@ -226,15 +251,24 @@
             </button>
         </form>
 
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <a href="{{ route('apoyos.export', array_merge(request()->query(), ['formato' => 'pdf'])) }}" class="btn-export pdf">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                PDF
-            </a>
-            <a href="{{ route('apoyos.export', array_merge(request()->query(), ['formato' => 'excel'])) }}" class="btn-export excel">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/></svg>
-                Excel
-            </a>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <form action="{{ route('apoyos.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;">
+                <input type="hidden" name="buscar" value="{{ request('buscar') }}">
+                <input type="hidden" name="estado" value="{{ request('estado') }}">
+                <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+                
+                <input type="month" name="mes" value="{{ request('mes', date('Y-m')) }}" class="month-input">
+                
+                <button type="submit" name="formato" value="pdf" class="btn-export pdf">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
+                    PDF
+                </button>
+                <button type="submit" name="formato" value="excel" class="btn-export excel">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/></svg>
+                    Excel
+                </button>
+            </form>
+
             <a href="{{ route('apoyos.create') }}" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>

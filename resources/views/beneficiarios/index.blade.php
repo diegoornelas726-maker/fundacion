@@ -17,9 +17,10 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .search-input, .filter-select {
+        .search-input, .filter-select, .period-input {
             padding: 9px 14px;
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.09);
@@ -33,11 +34,16 @@
 
         .search-input { min-width: 240px; }
         .search-input::placeholder { color: #3f3f46; }
-        .search-input:focus, .filter-select:focus {
+        .search-input:focus, .filter-select:focus, .period-input:focus {
             border-color: rgba(99,102,241,0.5);
         }
 
         .filter-select option { background: #18181a; }
+        
+        .period-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
 
         .btn {
             display: inline-flex;
@@ -75,7 +81,26 @@
 
         .btn-search:hover { background: rgba(255,255,255,0.1); color: #e4e4e7; }
 
-        /* Alerta */
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.18s;
+            border: none;
+        }
+        .btn-export svg { width: 15px; height: 15px; }
+        .btn-export.pdf { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+        .btn-export.pdf:hover { background: rgba(239,68,68,0.18); }
+        .btn-export.excel { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
+        .btn-export.excel:hover { background: rgba(34,197,94,0.18); }
+
         .alert {
             display: flex;
             align-items: center;
@@ -92,7 +117,6 @@
             color: #86efac;
         }
 
-        /* Tabla */
         .table-card {
             background: rgba(18,18,20,0.8);
             border: 1px solid rgba(255,255,255,0.07);
@@ -194,38 +218,48 @@
 
         .btn-del:hover { background: rgba(239,68,68,0.15); }
 
-        /* Empty state */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
         }
 
-        .empty-state svg { width: 40px; height: 40px; color: #3f3f46; margin-bottom: 12px; }
         .empty-state p { color: #52525b; font-size: 14px; }
 
-        /* Paginación */
         .pagination-wrap {
             padding: 16px;
             border-top: 1px solid rgba(255,255,255,0.06);
             display: flex;
             justify-content: center;
         }
-
-        .pagination-wrap nav { display: flex; gap: 4px; align-items: center; }
     </style>
 
+    @if (session('success'))
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('success') }}
+        </div>
+    @endif
 
-    <!-- Barra de herramientas -->
     <div class="toolbar">
-        <form class="search-group" method="GET" action="{{ route('beneficiarios.index') }}">
-            <input class="search-input" type="text" name="buscar"
-                   value="{{ request('buscar') }}"
-                   placeholder="Buscar por nombre, CURP o teléfono…">
-            <select class="filter-select" name="estado">
+        <form class="search-group" method="GET" action="{{ route('beneficiarios.index') }}" id="searchForm">
+            <input class="search-input" type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por nombre, CURP o teléfono…">
+            
+            <select class="filter-select" name="estado" onchange="document.getElementById('searchForm').submit()">
                 <option value="">Todos los estados</option>
-                <option value="Activo"   {{ request('estado') === 'Activo'   ? 'selected' : '' }}>Activo</option>
+                <option value="Activo" {{ request('estado') === 'Activo' ? 'selected' : '' }}>Activo</option>
                 <option value="Inactivo" {{ request('estado') === 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
             </select>
+
+            <select class="filter-select" name="tipo_periodo" id="tipo_periodo">
+                <option value="dia" {{ request('tipo_periodo') === 'dia' ? 'selected' : '' }}>Por Día</option>
+                <option value="mes" {{ request('tipo_periodo', 'mes') === 'mes' ? 'selected' : '' }}>Por Mes</option>
+            </select>
+
+            <div id="contenedor-periodo">
+                </div>
+
             <button type="submit" class="btn btn-search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
@@ -234,15 +268,17 @@
             </button>
         </form>
 
-        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-            <a href="{{ route('beneficiarios.export', array_merge(request()->query(), ['formato' => 'pdf'])) }}" class="btn-export pdf">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                PDF
-            </a>
-            <a href="{{ route('beneficiarios.export', array_merge(request()->query(), ['formato' => 'excel'])) }}" class="btn-export excel">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/></svg>
-                Excel
-            </a>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+            <form action="{{ route('beneficiarios.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;">
+                <input type="hidden" name="buscar" value="{{ request('buscar') }}">
+                <input type="hidden" name="estado" value="{{ request('estado') }}">
+                <input type="hidden" name="tipo_periodo" value="{{ request('tipo_periodo', 'mes') }}">
+                <input type="hidden" name="periodo" value="{{ request('periodo') }}">
+                
+                <button type="submit" name="formato" value="pdf" class="btn-export pdf">PDF</button>
+                <button type="submit" name="formato" value="excel" class="btn-export excel">Excel</button>
+            </form>
+
             <a href="{{ route('beneficiarios.create') }}" class="btn btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -252,7 +288,6 @@
         </div>
     </div>
 
-    <!-- Tabla -->
     <div class="table-card">
         <div class="table-wrap">
             <table>
@@ -270,14 +305,9 @@
                 </thead>
                 <tbody>
                     @forelse ($beneficiarios as $b)
-                        <tr class="fade-in-row" style="--row-index: {{ $loop->index }}">
+                        <tr>
                             <td>{{ $b->id }}</td>
-                            <td class="td-name">
-                                <span class="name-with-avatar">
-                                    <x-avatar :name="$b->nombre_completo" :size="30" />
-                                    {{ $b->nombre_completo }}
-                                </span>
-                            </td>
+                            <td class="td-name">{{ $b->nombre }} {{ $b->apellido_paterno }} {{ $b->apellido_materno }}</td>
                             <td>{{ $b->curp ?? '—' }}</td>
                             <td>{{ $b->telefono ?? '—' }}</td>
                             <td>{{ $b->colonia ?? '—' }}</td>
@@ -290,8 +320,7 @@
                             <td>
                                 <div class="actions">
                                     <a href="{{ route('beneficiarios.edit', $b) }}" class="btn-edit">Editar</a>
-                                    <form method="POST" action="{{ route('beneficiarios.destroy', $b) }}"
-                                          onsubmit="return confirm('¿Eliminar a {{ $b->nombre_completo }}? Esta acción no se puede deshacer.')">
+                                    <form method="POST" action="{{ route('beneficiarios.destroy', $b) }}" onsubmit="return confirm('¿Eliminar a {{ $b->nombre }}?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn-del">Eliminar</button>
                                     </form>
@@ -302,10 +331,7 @@
                         <tr>
                             <td colspan="8">
                                 <div class="empty-state">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
-                                    </svg>
-                                    <p>No se encontraron beneficiarios. <a href="{{ route('beneficiarios.create') }}" style="color:#818cf8;">Registra el primero.</a></p>
+                                    <p>No se encontraron beneficiarios registrados en este rango temporal.</p>
                                 </div>
                             </td>
                         </tr>
@@ -316,8 +342,47 @@
 
         @if ($beneficiarios->hasPages())
             <div class="pagination-wrap">
-                {{ $beneficiarios->links() }}
+                {{ $beneficiarios->appends(request()->query())->links() }}
             </div>
         @endif
     </div>
+
+    <script>
+        function cambiarTipoPeriodo(event) {
+            const selectorTipo = document.getElementById('tipo_periodo');
+            const tipo = selectorTipo.value;
+            const contenedor = document.getElementById('contenedor-periodo');
+            const form = document.getElementById('searchForm');
+            let inputHtml = '';
+
+            if (tipo === 'dia') {
+                let val = "{{ request('tipo_periodo') === 'dia' ? request('periodo') : date('Y-m-d') }}";
+                inputHtml = `<input type="date" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+            } else {
+                let val = "{{ request('tipo_periodo') === 'mes' || !request('tipo_periodo') ? request('periodo', date('Y-m')) : date('Y-m') }}";
+                inputHtml = `<input type="month" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+            }
+
+            contenedor.innerHTML = inputHtml;
+            
+            // Sincroniza los valores con el formulario de exportación
+            const inputOcultoPeriodo = document.querySelector('form[action*="exportar"] input[name="periodo"]');
+            const inputOcultoTipo = document.querySelector('form[action*="exportar"] input[name="tipo_periodo"]');
+            if(inputOcultoPeriodo) inputOcultoPeriodo.value = document.getElementsByName('periodo')[0]?.value || '';
+            if(inputOcultoTipo) inputOcultoTipo.value = tipo;
+
+            // Si el cambio fue detonado por el usuario al interactuar con el select, envía el formulario al instante
+            if (event && event.type === 'change') {
+                form.submit();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inicializa la estructura del input correcto al cargar la página sin refrescar automáticamente
+            cambiarTipoPeriodo();
+
+            // Escucha activamente el cambio del selector de periodos para gatillar el submit automático
+            document.getElementById('tipo_periodo').addEventListener('change', cambiarTipoPeriodo);
+        });
+    </script>
 </x-app-layout>
