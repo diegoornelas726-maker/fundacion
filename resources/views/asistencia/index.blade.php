@@ -45,14 +45,21 @@
             transition: all 0.18s;
         }
         .btn svg { width: 15px; height: 15px; }
-        .btn-primary { background: linear-gradient(135deg, #4f46e5, #3b82f6); color: #fff; }
-        .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(79,70,229,0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #6366f1, #60a5fa);
+            transform: translateY(-1px);
+        }
         .btn-ghost {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.09);
             color: #d4d4d8;
         }
-        .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+        .btn-ghost:hover { background: rgba(255,255,255,0.08); color: #e4e4e7; }
         .btn-amber {
             background: rgba(245,158,11,0.12);
             border: 1px solid rgba(245,158,11,0.25);
@@ -71,10 +78,10 @@
             border-radius: 12px;
             padding: 12px 18px;
             display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
         .summary-pill .dot { width: 9px; height: 9px; border-radius: 50%; }
         .summary-pill .dot.green { background: #4ade80; }
-        .summary-pill .dot.amber { background: #fbbf24; }
         .summary-pill .num { font-size: 18px; font-weight: 800; color: #f4f4f5; }
         .summary-pill .lbl { font-size: 12.5px; color: #71717a; }
 
@@ -107,16 +114,20 @@
 
         table { width: 100%; border-collapse: collapse; }
         thead th {
-            text-align: left; padding: 12px 20px;
+            text-align: left; padding: 13px 20px;
             font-size: 11.5px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.5px; color: #52525b;
+            letter-spacing: 0.8px; color: #52525b;
             border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-        tbody td { padding: 12px 20px; font-size: 13.5px; color: #d4d4d8; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        tbody td { padding: 13px 20px; font-size: 13.5px; color: #a1a1aa; border-bottom: 1px solid rgba(255,255,255,0.04); }
         tbody tr:last-child td { border-bottom: none; }
-        tbody tr { transition: background 0.15s; }
-        tbody tr:hover { background: rgba(255,255,255,0.02); }
-        .td-name { color: #f4f4f5; font-weight: 600; }
+        tbody tr { transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; }
+        tbody tr:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateX(3px);
+            box-shadow: -3px 0 0 #6366f1;
+        }
+        .td-name { color: #e4e4e7; font-weight: 600; }
         .th-right, .td-right { text-align: right; }
 
         /* Switch presente/ausente */

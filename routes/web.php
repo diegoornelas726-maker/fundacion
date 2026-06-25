@@ -34,7 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('asistencia/pdf', [AsistenciaController::class, 'pdf'])->name('asistencia.pdf');
 
     Route::get('exportar/beneficiarios', [ExportController::class, 'beneficiarios'])->name('beneficiarios.export');
-    Route::get('exportar/apoyos', [ExportController::class, 'apoyos'])->name('apoyos.export');
+    Route::get('exportar/apoyos', [ApoyoController::class, 'export'])->name('apoyos.export');
     Route::get('exportar/actividades', [ExportController::class, 'actividades'])->name('actividades.export');
     Route::get('exportar/asistencia', [ExportController::class, 'asistencia'])->name('asistencia.export');
     Route::post('asistencia/visitante', [AsistenciaController::class, 'storeVisitante'])->name('asistencia.visitante.store');

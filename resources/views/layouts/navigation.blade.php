@@ -15,6 +15,22 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    <x-nav-link :href="route('beneficiarios.index')" :active="request()->routeIs('beneficiarios.*')">
+                        {{ __('Beneficiarios') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('apoyos.index')" :active="request()->routeIs('apoyos.*')">
+                        {{ __('Apoyos') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('actividades.index')" :active="request()->routeIs('actividades.*')">
+                        {{ __('Actividades') }}
+                    </x-nav-link>
+
+                    <x-nav-link :href="route('asistencia.index')" :active="request()->routeIs('asistencia.*')">
+                        {{ __('Asistencia') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -69,6 +85,22 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('beneficiarios.index')" :active="request()->routeIs('beneficiarios.*')">
+                {{ __('Beneficiarios') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('apoyos.index')" :active="request()->routeIs('apoyos.*')">
+                {{ __('Apoyos') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('actividades.index')" :active="request()->routeIs('actividades.*')">
+                {{ __('Actividades') }}
+            </x-responsive-nav-link>
+
+            <x-responsive-nav-link :href="route('asistencia.index')" :active="request()->routeIs('asistencia.*')">
+                {{ __('Asistencia') }}
             </x-responsive-nav-link>
         </div>
 

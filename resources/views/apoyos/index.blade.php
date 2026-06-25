@@ -13,9 +13,14 @@
             margin-bottom: 20px;
         }
 
-        .search-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .search-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
 
-        .search-input, .filter-select, .month-input {
+        .search-input, .filter-select, .period-input {
             padding: 9px 14px;
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.09);
@@ -29,11 +34,13 @@
 
         .search-input { min-width: 220px; }
         .search-input::placeholder { color: #3f3f46; }
-        .search-input:focus, .filter-select:focus, .month-input:focus { border-color: rgba(99,102,241,0.5); }
-        .filter-select option { background: #18181a; }
+        .search-input:focus, .filter-select:focus, .period-input:focus {
+            border-color: rgba(99,102,241,0.5);
+        }
 
-        /* Ajuste estético para el calendario en el tema oscuro */
-        .month-input::-webkit-calendar-picker-indicator {
+        .filter-select option { background: #18181a; }
+        
+        .period-input::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
         }
@@ -74,7 +81,6 @@
 
         .btn-search:hover { background: rgba(255,255,255,0.1); color: #e4e4e7; }
 
-        /* Estilos unificados para los botones de exportación */
         .btn-export {
             display: inline-flex;
             align-items: center;
@@ -121,9 +127,14 @@
 
         .table-wrap { overflow-x: auto; }
 
-        table { width: 100%; border-collapse: collapse; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-        thead tr { border-bottom: 1px solid rgba(255,255,255,0.07); }
+        thead tr {
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
 
         thead th {
             padding: 13px 16px;
@@ -148,34 +159,23 @@
             box-shadow: -3px 0 0 #6366f1;
         }
 
-        tbody td { padding: 13px 16px; font-size: 13.5px; color: #a1a1aa; }
+        tbody td {
+            padding: 13px 16px;
+            font-size: 13.5px;
+            color: #a1a1aa;
+        }
 
-        .td-primary { color: #e4e4e7; font-weight: 600; }
+        .td-name { color: #e4e4e7; font-weight: 600; }
 
-        .badge {
+        .tipo-chip {
             display: inline-block;
-            padding: 3px 10px;
-            border-radius: 99px;
+            padding: 4px 10px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 600;
-        }
-
-        .badge-entregado {
-            background: rgba(34,197,94,0.1);
-            border: 1px solid rgba(34,197,94,0.2);
-            color: #86efac;
-        }
-
-        .badge-pendiente {
-            background: rgba(234,179,8,0.1);
-            border: 1px solid rgba(234,179,8,0.2);
-            color: #fde047;
-        }
-
-        .badge-cancelado {
-            background: rgba(239,68,68,0.08);
-            border: 1px solid rgba(239,68,68,0.18);
-            color: #f87171;
+            background: rgba(99,102,241,0.06);
+            border: 1px solid rgba(99,102,241,0.15);
+            color: #a5b4fc;
         }
 
         .actions { display: flex; gap: 6px; }
@@ -209,9 +209,18 @@
 
         .btn-del:hover { background: rgba(239,68,68,0.15); }
 
-        .empty-state { text-align: center; padding: 60px 20px; }
-        .empty-state svg { width: 40px; height: 40px; color: #3f3f46; margin-bottom: 12px; }
-        .empty-state p { color: #52525b; font-size: 14px; }
+        /* Estado vacío optimizado */
+        .empty-state {
+            text-align: center;
+            padding: 30px 16px;
+        }
+
+        .empty-state p { 
+            color: #71717a; 
+            font-size: 13.5px; 
+            margin: 0;
+            font-weight: 500;
+        }
 
         .pagination-wrap {
             padding: 16px;
@@ -219,29 +228,63 @@
             display: flex;
             justify-content: center;
         }
+
+        /* ════════════════════════════════════════════
+           SOPORTE DE TEMA CLARO PARA FILTROS E INPUTS DE FECHA
+           ════════════════════════════════════════════ */
+        [data-theme="light"] .search-input,
+        [data-theme="light"] .filter-select,
+        [data-theme="light"] .period-input {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #18181b;
+        }
+
+        [data-theme="light"] .search-input::placeholder {
+            color: #a1a1aa;
+        }
+
+        [data-theme="light"] .filter-select option {
+            background: #ffffff;
+            color: #18181b;
+        }
+
+        [data-theme="light"] .period-input::-webkit-calendar-picker-indicator {
+            filter: invert(0);
+        }
+
+        [data-theme="light"] .tipo-chip {
+            background: rgba(99,102,241,0.08);
+            border-color: rgba(99,102,241,0.2);
+            color: #4f46e5;
+        }
     </style>
 
-    <div class="toolbar">
-        <form class="search-group" method="GET" action="{{ route('apoyos.index') }}">
-            <input class="search-input" type="text" name="buscar"
-                   value="{{ request('buscar') }}"
-                   placeholder="Buscar por beneficiario o tipo…">
+    @if (session('success'))
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {{ session('success') }}
+        </div>
+    @endif
 
-            <select class="filter-select" name="estado">
-                <option value="">Todos los estados</option>
-                @foreach(['Entregado','Pendiente','Cancelado'] as $e)
-                    <option value="{{ $e }}" {{ request('estado') === $e ? 'selected' : '' }}>{{ $e }}</option>
-                @endforeach
+    <div class="toolbar">
+        <form class="search-group" method="GET" action="{{ route('apoyos.index') }}" id="searchForm">
+            <input class="search-input" type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Buscar por beneficio u otorgado a…">
+            
+            <select class="filter-select" name="tipo" onchange="document.getElementById('searchForm').submit()">
+                <option value="">Todos los tipos</option>
+                <option value="Especie" {{ request('tipo') === 'Especie' ? 'selected' : '' }}>Especie</option>
+                <option value="Económico" {{ request('tipo') === 'Económico' ? 'selected' : '' }}>Económico</option>
             </select>
 
-            @if($tipos->count())
-                <select class="filter-select" name="tipo">
-                    <option value="">Todos los tipos</option>
-                    @foreach($tipos as $t)
-                        <option value="{{ $t }}" {{ request('tipo') === $t ? 'selected' : '' }}>{{ $t }}</option>
-                    @endforeach
-                </select>
-            @endif
+            <select class="filter-select" name="tipo_periodo" id="tipo_periodo">
+                <option value="dia" {{ request('tipo_periodo') === 'dia' ? 'selected' : '' }}>Por Día</option>
+                <option value="mes" {{ request('tipo_periodo', 'mes') === 'mes' ? 'selected' : '' }}>Por Mes</option>
+            </select>
+
+            <div id="contenedor-periodo"></div>
 
             <button type="submit" class="btn btn-search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -254,19 +297,12 @@
         <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
             <form action="{{ route('apoyos.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;">
                 <input type="hidden" name="buscar" value="{{ request('buscar') }}">
-                <input type="hidden" name="estado" value="{{ request('estado') }}">
                 <input type="hidden" name="tipo" value="{{ request('tipo') }}">
+                <input type="hidden" name="tipo_periodo" value="{{ request('tipo_periodo', 'mes') }}">
+                <input type="hidden" name="periodo" value="{{ request('periodo') }}">
                 
-                <input type="month" name="mes" value="{{ request('mes', date('Y-m')) }}" class="month-input">
-                
-                <button type="submit" name="formato" value="pdf" class="btn-export pdf">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg>
-                    PDF
-                </button>
-                <button type="submit" name="formato" value="excel" class="btn-export excel">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776"/></svg>
-                    Excel
-                </button>
+                <button type="submit" name="formato" value="pdf" class="btn-export pdf">PDF</button>
+                <button type="submit" name="formato" value="excel" class="btn-export excel">Excel</button>
             </form>
 
             <a href="{{ route('apoyos.create') }}" class="btn btn-primary">
@@ -285,41 +321,40 @@
                     <tr>
                         <th>#</th>
                         <th>Beneficiario</th>
-                        <th>Tipo de apoyo</th>
-                        <th>Fecha</th>
+                        <th>Descripción / Beneficio</th>
+                        <th>Tipo de Apoyo</th>
                         <th>Monto</th>
-                        <th>Estado</th>
+                        <th>Fecha de Apoyo</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($apoyos as $a)
-                        <tr class="fade-in-row" style="--row-index: {{ $loop->index }}">
+                        <tr>
                             <td>{{ $a->id }}</td>
-                            <td class="td-primary">
-                                <span class="name-with-avatar">
-                                    <x-avatar :name="$a->beneficiario->nombre_completo" :size="30" />
-                                    {{ $a->beneficiario->nombre_completo }}
-                                </span>
+                            <td class="td-name">
+                                @if($a->beneficiario)
+                                    {{ $a->beneficiario->nombre }} {{ $a->beneficiario->apellido_paterno }}
+                                @else
+                                    <span style="color:#71717a; font-style:italic;">No asignado</span>
+                                @endif
                             </td>
-                            <td>{{ $a->tipo_apoyo }}</td>
-                            <td>{{ $a->fecha_apoyo->format('d/m/Y') }}</td>
-                            <td>{{ $a->monto ? '$' . number_format($a->monto, 2) : '—' }}</td>
+                            <td>{{ $a->descripcion ?? 'Sin descripción' }}</td>
                             <td>
-                                @php
-                                    $badgeClass = match($a->estado) {
-                                        'Entregado' => 'badge-entregado',
-                                        'Pendiente' => 'badge-pendiente',
-                                        default     => 'badge-cancelado',
-                                    };
-                                @endphp
-                                <span class="badge {{ $badgeClass }}">{{ $a->estado }}</span>
+                                <span class="tipo-chip">{{ $a->tipo_apoyo }}</span>
                             </td>
+                            <td>
+                                @if($a->monto)
+                                    ${{ number_format($a->monto, 2) }}
+                                @else
+                                    <span style="color:#52525b;">—</span>
+                                @endif
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($a->fecha_apoyo)->format('d/m/Y') }}</td>
                             <td>
                                 <div class="actions">
                                     <a href="{{ route('apoyos.edit', $a) }}" class="btn-edit">Editar</a>
-                                    <form method="POST" action="{{ route('apoyos.destroy', $a) }}"
-                                          onsubmit="return confirm('¿Eliminar este apoyo? Esta acción no se puede deshacer.')">
+                                    <form method="POST" action="{{ route('apoyos.destroy', $a) }}" onsubmit="return confirm('¿Eliminar este registro de apoyo?')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn-del">Eliminar</button>
                                     </form>
@@ -330,10 +365,7 @@
                         <tr>
                             <td colspan="7">
                                 <div class="empty-state">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>
-                                    </svg>
-                                    <p>No hay apoyos registrados. <a href="{{ route('apoyos.create') }}" style="color:#818cf8;">Registra el primero.</a></p>
+                                    <p>No se encontraron apoyos registrados en este rango temporal.</p>
                                 </div>
                             </td>
                         </tr>
@@ -343,7 +375,44 @@
         </div>
 
         @if ($apoyos->hasPages())
-            <div class="pagination-wrap">{{ $apoyos->links() }}</div>
+            <div class="pagination-wrap">
+                {{ $apoyos->appends(request()->query())->links() }}
+            </div>
         @endif
     </div>
+
+    <script>
+        function cambiarTipoPeriodo(event) {
+            const selectorTipo = document.getElementById('tipo_periodo');
+            const tipo = selectorTipo.value;
+            const contenedor = document.getElementById('contenedor-periodo');
+            const form = document.getElementById('searchForm');
+            let inputHtml = '';
+
+            if (tipo === 'dia') {
+                let val = "{{ request('tipo_periodo') === 'dia' ? request('periodo') : date('Y-m-d') }}";
+                inputHtml = `<input type="date" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+            } else {
+                let val = "{{ request('tipo_periodo') === 'mes' || !request('tipo_periodo') ? request('periodo', date('Y-m')) : date('Y-m') }}";
+                inputHtml = `<input type="month" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+            }
+
+            contenedor.innerHTML = inputHtml;
+            
+            // Sincroniza los valores con los campos ocultos del formulario de exportación
+            const inputOcultoPeriodo = document.querySelector('form[action*="exportar"] input[name="periodo"]');
+            const inputOcultoTipo = document.querySelector('form[action*="exportar"] input[name="tipo_periodo"]');
+            if(inputOcultoPeriodo) inputOcultoPeriodo.value = document.getElementsByName('periodo')[0]?.value || '';
+            if(inputOcultoTipo) inputOcultoTipo.value = tipo;
+
+            if (event && event.type === 'change') {
+                form.submit();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            cambiarTipoPeriodo();
+            document.getElementById('tipo_periodo').addEventListener('change', cambiarTipoPeriodo);
+        });
+    </script>
 </x-app-layout>

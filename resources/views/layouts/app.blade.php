@@ -164,7 +164,7 @@
             transform: scale(1.08) rotate(-4deg);
         }
 
-                .nav-logo-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .nav-logo-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         @keyframes logoFloat {
             0%, 100% { transform: translateY(0); }
@@ -582,6 +582,10 @@
                 <a href="{{ route('actividades.index') }}"
                    class="nav-link {{ request()->routeIs('actividades.*') ? 'active' : '' }}">
                     Actividades
+                </a>
+                <a href="{{ route('asistencia.index') }}"
+                   class="nav-link {{ request()->routeIs('asistencia.*') ? 'active' : '' }}">
+                    Asistencia
                 </a>
 
                 <span class="nav-indicator" id="nav-indicator"></span>

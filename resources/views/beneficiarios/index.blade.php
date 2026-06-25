@@ -218,18 +218,48 @@
 
         .btn-del:hover { background: rgba(239,68,68,0.15); }
 
+        /* Estado vacío optimizado (Igual al de Apoyos) */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 30px 16px;
         }
 
-        .empty-state p { color: #52525b; font-size: 14px; }
+        .empty-state p { 
+            color: #71717a; 
+            font-size: 13.5px; 
+            margin: 0;
+            font-weight: 500;
+        }
 
         .pagination-wrap {
             padding: 16px;
             border-top: 1px solid rgba(255,255,255,0.06);
             display: flex;
             justify-content: center;
+        }
+
+        /* ════════════════════════════════════════════
+           SOPORTE DE TEMA CLARO PARA FILTROS E INPUTS DE FECHA
+           ════════════════════════════════════════════ */
+        [data-theme="light"] .search-input,
+        [data-theme="light"] .filter-select,
+        [data-theme="light"] .period-input {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #18181b;
+        }
+
+        [data-theme="light"] .search-input::placeholder {
+            color: #a1a1aa;
+        }
+
+        [data-theme="light"] .filter-select option {
+            background: #ffffff;
+            color: #18181b;
+        }
+
+        [data-theme="light"] .period-input::-webkit-calendar-picker-indicator {
+            filter: invert(0);
         }
     </style>
 
@@ -257,8 +287,7 @@
                 <option value="mes" {{ request('tipo_periodo', 'mes') === 'mes' ? 'selected' : '' }}>Por Mes</option>
             </select>
 
-            <div id="contenedor-periodo">
-                </div>
+            <div id="contenedor-periodo"></div>
 
             <button type="submit" class="btn btn-search">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -365,23 +394,18 @@
 
             contenedor.innerHTML = inputHtml;
             
-            // Sincroniza los valores con el formulario de exportación
             const inputOcultoPeriodo = document.querySelector('form[action*="exportar"] input[name="periodo"]');
             const inputOcultoTipo = document.querySelector('form[action*="exportar"] input[name="tipo_periodo"]');
             if(inputOcultoPeriodo) inputOcultoPeriodo.value = document.getElementsByName('periodo')[0]?.value || '';
             if(inputOcultoTipo) inputOcultoTipo.value = tipo;
 
-            // Si el cambio fue detonado por el usuario al interactuar con el select, envía el formulario al instante
             if (event && event.type === 'change') {
                 form.submit();
             }
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Inicializa la estructura del input correcto al cargar la página sin refrescar automáticamente
             cambiarTipoPeriodo();
-
-            // Escucha activamente el cambio del selector de periodos para gatillar el submit automático
             document.getElementById('tipo_periodo').addEventListener('change', cambiarTipoPeriodo);
         });
     </script>

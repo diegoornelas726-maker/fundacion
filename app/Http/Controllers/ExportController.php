@@ -31,7 +31,6 @@ class ExportController extends Controller
             $query->where('estado', $request->estado);
         }
 
-        // Filtro Temporal Simplificado (Día o Mes)
         $tipo = $request->input('tipo_periodo', 'mes');
         $periodo = $request->input('periodo');
         $tituloPeriodo = 'Reporte';
@@ -39,136 +38,148 @@ class ExportController extends Controller
         if ($periodo) {
             if ($tipo === 'dia') {
                 $query->whereDate('created_at', $periodo);
-                $tituloPeriodo = 'Día ' . Carbon::parse($periodo)->format('d-m-Y');
+                $tituloPeriodo = 'Día '.Carbon::parse($periodo)->format('d-m-Y');
             } else {
-                $query->whereYear('created_at', substr($periodo, 0, 4))
-                      ->whereMonth('created_at', substr($periodo, 5, 2));
-                $parsed = $this->parseMes($periodo);
-                $tituloPeriodo = $parsed ? $parsed->locale('es')->isoFormat('MMMM [de] YYYY') : $periodo;
+                $year = substr($periodo, 0, 4);
+                $month = substr($periodo, 5, 2);
+                $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
+                $tituloPeriodo = $periodo;
             }
+        } else {
+            $query->whereYear('created_at', date('Y'))->whereMonth('created_at', date('m'));
+            $tituloPeriodo = date('Y-m');
         }
 
         $rows = $query->latest()->get();
         $formato = $request->input('formato', 'pdf');
 
         if ($formato === 'excel') {
-            $columnas = ['#', 'Nombre completo', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Fecha Registro'];
+            $columnas = ['#', 'Nombre Completo', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Registro'];
             $filas = [];
             foreach ($rows as $r) {
                 $filas[] = [
                     $r->id,
                     "$r->nombre $r->apellido_paterno $r->apellido_materno",
-                    $r->curp,
-                    $r->telefono,
-                    $r->colonia,
+                    $r->curp ?? '—',
+                    $r->telefono ?? '—',
+                    $r->colonia ?? '—',
                     $r->estado,
-                    $r->created_at->format('d/m/Y')
+                    $r->created_at->format('d/m/Y'),
                 ];
             }
-            return $this->csv($columnas, $filas, 'beneficiarios_' . $tipo . '_' . $periodo);
+
+            return $this->csv($columnas, $filas, 'beneficiarios_'.$tipo.'_'.$periodo);
         }
 
-        $pdf = Pdf::loadView('beneficiarios.pdf', [
-            'beneficiarios' => $rows, 
-            'mes' => $tituloPeriodo
-        ]);
-
-        return $pdf->download('beneficiarios_' . $tipo . '_' . $periodo . '.pdf');
+        // CORRECCIÓN: Apuntamos correctamente a la ruta de la vista de beneficiarios 'beneficiarios.pdf'
+        // Si tu archivo está en resources/views/pdf.blade.php cambia 'beneficiarios.pdf' por 'pdf'
+        return $this->pdfExport('beneficiarios.pdf', $rows, 'beneficiarios_reporte', $tituloPeriodo);
     }
 
     public function apoyos(Request $request)
     {
-        $query = Apoyo::query();
+        $query = Apoyo::with('beneficiario');
 
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(function ($q) use ($b) {
-                $q->where('nombre', 'like', "%$b%")
-                    ->orWhere('tipo', 'like', "%$b%")
-                    ->orWhere('descripcion', 'like', "%$b%");
+                $q->where('tipo_apoyo', 'like', "%$b%")
+                  ->orWhereHas('beneficiario', fn($q2) =>
+                      $q2->where('nombre', 'like', "%$b%")
+                         ->orWhere('apellido_paterno', 'like', "%$b%")
+                  );
             });
         }
 
-        $rows = $query->latest()->get();
-
-        $columnas = ['#', 'Nombre del apoyo', 'Tipo', 'Descripción', 'Cantidad', 'Fecha Registro'];
-        $filas = [];
-        foreach ($rows as $r) {
-            $filas[] = [$r->id, $r->nombre, $r->tipo, $r->descripcion, $r->cantidad, $r->created_at->format('d/m/Y')];
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
         }
 
-        return $this->descargarPdfOCsv($rows, 'apoyos.pdf', $columnas, $filas, 'apoyos_reporte', $request->input('mes'));
+        $tipo = $request->input('tipo_periodo', 'mes');
+        $periodo = $request->input('periodo');
+        $tituloPeriodo = 'Reporte';
+
+        if ($periodo) {
+            if ($tipo === 'dia') {
+                $query->whereDate('fecha_apoyo', $periodo);
+                $tituloPeriodo = 'Día ' . Carbon::parse($periodo)->format('d-m-Y');
+            } else {
+                $year = substr($periodo, 0, 4);
+                $month = substr($periodo, 5, 2);
+                $query->whereYear('fecha_apoyo', $year)->whereMonth('fecha_apoyo', $month);
+                $tituloPeriodo = $periodo;
+            }
+        } else {
+            $query->whereYear('fecha_apoyo', date('Y'))->whereMonth('fecha_apoyo', date('m'));
+            $tituloPeriodo = date('Y-m');
+        }
+
+        $rows = $query->latest('fecha_apoyo')->get();
+        $formato = $request->input('formato', 'pdf');
+
+        if ($formato === 'excel') {
+            $columnas = ['#', 'Beneficiario', 'Descripción / Beneficio', 'Tipo de Apoyo', 'Monto', 'Fecha de Apoyo', 'Estado'];
+            $filas = [];
+            foreach ($rows as $r) {
+                $nombreCompleto = $r->beneficiario 
+                    ? "{$r->beneficiario->nombre} {$r->beneficiario->apellido_paterno} {$r->beneficiario->apellido_materno}"
+                    : 'No asignado';
+
+                $filas[] = [
+                    $r->id,
+                    $nombreCompleto,
+                    $r->descripcion ?? '—',
+                    $r->tipo_apoyo,
+                    $r->monto ? "$" . number_format($r->monto, 2) : '—',
+                    Carbon::parse($r->fecha_apoyo)->format('d/m/Y'),
+                    $r->estado
+                ];
+            }
+
+            return $this->csv($columnas, $filas, 'apoyos_'.$tipo.'_'.$periodo);
+        }
+
+        $parsed = $this->parseMes($tituloPeriodo);
+        if ($parsed) {
+            $tituloPeriodo = ucfirst($parsed->locale('es')->isoFormat('MMMM [de] YYYY'));
+        }
+
+        $pdf = Pdf::loadView('apoyos.pdf', [
+            'apoyos' => $rows,
+            'mes' => $tituloPeriodo
+        ]);
+
+        return $pdf->download('apoyos_reporte_'.$tipo.'_'.$periodo.'.pdf');
     }
 
     public function actividades(Request $request)
     {
         $query = Actividad::query();
-
-        if ($request->filled('buscar')) {
-            $b = $request->buscar;
-            $query->where(function ($q) use ($b) {
-                $q->where('nombre', 'like', "%$b%")
-                    ->orWhere('descripcion', 'like', "%$b%")
-                    ->orWhere('lugar', 'like', "%$b%");
-            });
-        }
-        if ($request->filled('mes')) {
-            $mes = $this->parseMes($request->mes);
-            if ($mes) {
-                $query->whereYear('fecha', $mes->year)
-                    ->whereMonth('fecha', $mes->month);
-            }
-        }
-
         $rows = $query->latest()->get();
 
-        $columnas = ['#', 'Nombre de la actividad', 'Descripción', 'Fecha', 'Hora', 'Lugar', 'Cupo'];
-        $filas = [];
-        foreach ($rows as $r) {
-            $filas[] = [$r->id, $r->nombre, $r->descripcion, Carbon::parse($r->fecha)->format('d/m/Y'), $r->hora, $r->lugar, $r->cupo];
-        }
-
-        return $this->descargarPdfOCsv($rows, 'actividades.pdf', $columnas, $filas, 'actividades_reporte', $request->input('mes'));
+        return $this->csv(['ID', 'Nombre', 'Fecha'], $rows->toArray(), 'actividades');
     }
 
     public function asistencia(Request $request)
     {
-        $query = Asistencia::query()->with('beneficiario');
+        $query = Asistencia::query();
+        $rows = $query->latest()->get();
 
-        if ($request->filled('fecha')) {
-            $query->whereDate('fecha', $request->fecha);
-        } else {
-            $query->whereDate('fecha', Carbon::today());
-        }
-
-        $rows = $query->get();
-
-        $columnas = ['#', 'Nombre', 'Tipo', 'Estado', 'Fecha'];
-        $filas = [];
-        foreach ($rows as $i => $r) {
-            $nombre = $r->beneficiario_id ? ($r->beneficiario->nombre.' '.$r->beneficiario->apellido_paterno) : $r->nombre_visitante;
-            $tipo = $r->beneficiario_id ? 'Beneficiario' : 'Visitante';
-            $estado = $r->presente ? 'Presente' : 'Ausente';
-            $filas[] = [$i + 1, $nombre, $tipo, $estado, Carbon::parse($r->fecha)->format('d/m/Y')];
-        }
-
-        $fechaTitulo = Carbon::parse($request->input('fecha', Carbon::today()))->locale('es')->isoFormat('dddd, D [de] MMMM YYYY');
-
-        return $this->descargarPdfOCsv($rows, 'asistencia.pdf', $columnas, $filas, 'asistencia_reporte', $fechaTitulo);
+        return $this->csv(['ID', 'Fecha'], $rows->toArray(), 'asistencia');
     }
 
-    private function descargarPdfOCsv($rows, string $view, array $columnas, array $filas, string $slug, ?string $mes): mixed
+    private function pdfExport(string $view, $rows, string $slug, ?string $mes): \Illuminate\Http\Response
     {
-        $formato = request('formato', 'pdf');
-
-        if ($formato === 'excel') {
-            return $this->csv($columnas, $filas, $slug);
+        $view = str_replace('.blade.php', '', $view);
+        
+        if (! view()->exists($view)) {
+            abort(444, "Vista [{$view}] no encontrada.");
         }
 
         $titulo = $this->tituloConMes(ucfirst(str_replace('_reporte', '', $slug)), $mes);
 
         $pdf = Pdf::loadView($view, [
-            str_replace('.pdf', '', $view) => $rows,
+            'beneficiarios' => $rows, 
             'mes' => $titulo,
         ]);
 
@@ -208,12 +219,15 @@ class ExportController extends Controller
         return $base.' — '.ucfirst($nombreMes);
     }
 
-    private function parseMes(?string $value): ?Carbon
+    private function parseMes(string $str): ?Carbon
     {
-        if (! $value || ! preg_match('/^\d{4}-\d{2}$/', $value)) {
-            return null;
+        if (preg_match('/^\d{4}-\d{2}$/', $str)) {
+            return Carbon::createFromFormat('Y-m', $str);
+        }
+        if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $str)) {
+            return Carbon::createFromFormat('d-m-Y', $str);
         }
 
-        return Carbon::createFromFormat('Y-m', $value)->startOfMonth();
+        return null;
     }
 }
