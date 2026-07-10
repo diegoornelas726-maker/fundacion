@@ -15,11 +15,18 @@
         
         .filter-group {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
         }
 
-        .month-input {
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+        }
+
+        .filter-select, .period-input {
             padding: 9px 14px;
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.09);
@@ -30,116 +37,172 @@
             outline: none;
             transition: border-color 0.18s;
         }
-        .month-input:focus { border-color: rgba(99,102,241,0.5); }
+        .filter-select option { background: #18181a; }
+        .filter-select:focus, .period-input:focus { border-color: rgba(99,102,241,0.5); }
         
-        /* Ajuste estético para el calendario en el tema oscuro */
-        .month-input::-webkit-calendar-picker-indicator {
+        .period-input::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
         }
 
-        .btn {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 9px 16px; border-radius: 10px;
+        .hist-card {
+            background: rgba(18, 18, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .hist-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .hist-table th {
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            color: #a1a1aa;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .hist-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #e4e4e7;
+            font-size: 14px;
+        }
+        .hist-table tr:last-child td { border-bottom: none; }
+        .hist-table tr:hover td { background: rgba(255, 255, 255, 0.01); }
+
+        .btn-view {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13.5px;
+            transition: color 0.15s;
+        }
+        .btn-view:hover { color: #818cf8; text-decoration: underline; }
+
+        .btn-ex {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 10px;
+            color: #d4d4d8;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 13.5px; font-weight: 600;
-            cursor: pointer; text-decoration: none; border: none; transition: all 0.18s;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            text-decoration: none;
         }
-        .btn svg { width: 15px; height: 15px; }
-        .btn-ghost { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); color: #d4d4d8; }
-        .btn-ghost:hover { background: rgba(255,255,255,0.08); }
-
-        .table-card {
-            background: rgba(18,18,20,0.8); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 16px; overflow: hidden; backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        .btn-ex:hover {
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #09090b;
         }
-        
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead th { text-align: left; padding: 13px 20px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #52525b; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        tbody td { padding: 13px 20px; font-size: 13.5px; color: #d4d4d8; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr { transition: background 0.15s; }
-        tbody tr:hover { background: rgba(255,255,255,0.02); }
-        .td-date { color: #f4f4f5; font-weight: 600; text-transform: capitalize; }
-        .pill { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-        .pill-green { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.22); color: #86efac; }
-        .pill-gray { background: rgba(113,113,122,0.12); border: 1px solid rgba(113,113,122,0.2); color: #a1a1aa; }
-        .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
-        .btn-sm { padding: 6px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
-        .btn-view { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: #a5b4fc; }
-        .btn-view:hover { background: rgba(99,102,241,0.18); }
-        .btn-pdf { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.22); color: #fcd34d; }
-        .btn-pdf:hover { background: rgba(245,158,11,0.18); }
-        .empty-state { text-align: center; padding: 60px 20px; color: #52525b; font-size: 14px; }
-        .pagination-wrap { padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: center; }
-        .th-right, .td-right { text-align: right; }
+        .btn-ex svg { width: 15px; height: 15px; }
 
-        [data-theme="light"] .table-card { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.07); }
-        [data-theme="light"] thead th { color: #71717a; border-bottom-color: rgba(0,0,0,0.07); }
-        [data-theme="light"] tbody td { color: #3f3f46; border-bottom-color: rgba(0,0,0,0.05); }
-        [data-theme="light"] .td-date { color: #18181b; }
-        [data-theme="light"] tbody tr:hover { background: rgba(0,0,0,0.02); }
-        [data-theme="light"] .btn-ghost { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.1); color: #3f3f46; }
-        [data-theme="light"] .month-input { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.1); color: #18181b; }
-        [data-theme="light"] .month-input::-webkit-calendar-picker-indicator { filter: none; }
+        .empty { padding: 40px 20px !important; text-align: center; color: #71717a !important; font-size: 14px; }
+        .pagi { padding: 16px 20px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
     </style>
 
     <div class="hist-top">
-        <form method="GET" action="{{ route('asistencia.historial') }}" class="filter-group">
-            <input type="month" name="mes" value="{{ request('mes', date('Y-m')) }}" class="month-input" onchange="this.form.submit()">
-            <p style="color:#71717a; font-size:13.5px; margin: 0 0 0 4px;">Asistencias registradas.</p>
+        <form method="GET" action="{{ route('asistencia.historial') }}" id="searchForm" class="filter-group">
+            <div class="filter-group">
+                <span class="filter-label">Mes:</span>
+                <input type="month" name="filtro_mes" value="{{ $filtroMes }}" class="period-input" onchange="document.getElementById('searchForm').submit()">
+            </div>
+
+            <div class="filter-group">
+                <span class="filter-label">Día:</span>
+                <select name="filtro_dia" class="filter-select" onchange="document.getElementById('searchForm').submit()">
+                    <option value="todos" {{ $filtroDia == 'todos' || !$filtroDia ? 'selected' : '' }}>Todos los días</option>
+                    @for ($i = 1; $i <= 31; $i++)
+                        @php $dVal = sprintf('%02d', $i); @endphp
+                        <option value="{{ $dVal }}" {{ $filtroDia == $dVal ? 'selected' : '' }}>{{ $dVal }}</option>
+                    @endfor
+                </select>
+            </div>
         </form>
-        
-        <a href="{{ route('asistencia.index') }}" class="btn btn-ghost">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-            </svg>
-            Tomar asistencia
-        </a>
+
+        <form action="{{ route('asistencia.export') }}" method="GET" id="exportForm">
+            <input type="hidden" name="tipo_periodo" id="export_tipo_periodo" value="mes">
+            <input type="hidden" name="periodo" id="export_periodo" value="{{ $filtroMes }}">
+            <button type="submit" class="btn-ex">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
+                Exportar Excel
+            </button>
+        </form>
     </div>
 
-    <div class="table-card">
-        <div class="table-wrap">
-            <table>
-                <thead>
+    <div class="hist-card">
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Asistencias</th>
+                    <th style="width: 100px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($fechas as $f)
+                    @php
+                        $cFecha = \Illuminate\Support\Carbon::parse($f->fecha);
+                    @endphp
                     <tr>
-                        <th>Fecha</th>
-                        <th>Presentes</th>
-                        <th>Registros</th>
-                        <th class="th-right">Acciones</th>
+                        <td>
+                            <strong>{{ $cFecha->locale('es')->isoFormat('dddd') }}</strong>, 
+                            {{ $cFecha->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }}
+                        </td>
+                        <td>
+                            <span style="color:#34d399; font-weight:600;">{{ $f->presentes }}</span> 
+                            <span style="color:#71717a;">/ {{ $f->total }} presentes</span>
+                        </td>
+                        <td>
+                            <a href="{{ route('asistencia.index', ['fecha' => $f->fecha]) }}" class="btn-view">Ver/Editar</a>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse ($fechas as $f)
-                        @php $fc = \Illuminate\Support\Carbon::parse($f->fecha); @endphp
-                        <tr>
-                            <td class="td-date">{{ $fc->locale('es')->isoFormat('dddd, D [de] MMMM YYYY') }}</td>
-                            <td><span class="pill {{ $f->presentes > 0 ? 'pill-green' : 'pill-gray' }}">{{ $f->presentes }} presentes</span></td>
-                            <td>{{ $f->total }}</td>
-                            <td class="td-right">
-                                <div class="row-actions">
-                                    <a href="{{ route('asistencia.index', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-view">Ver / editar</a>
-                                    <a href="{{ route('asistencia.pdf', ['fecha' => $fc->format('Y-m-d')]) }}" class="btn-sm btn-pdf">PDF</a>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4">
-                                <div class="empty-state">
-                                    Aún no hay asistencias registradas en este período.
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                @empty
+                    <tr>
+                        <td colspan="3" class="empty">No se encontraron registros de asistencia para el período seleccionado.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
 
-        @if ($fechas->hasPages())
-            <div class="pagination-wrap">{{ $fechas->appends(request()->query())->links() }}</div>
+        @if($fechas->hasPages())
+            <div class="pagi">
+                {{ $fechas->links() }}
+            </div>
         @endif
     </div>
+
+    <script>
+        // Sincroniza los filtros activos del buscador hacia el formulario del botón de exportar excel
+        function sincronizarFormularioExportacion() {
+            const mesVal = document.querySelector('input[name="filtro_mes"]').value;
+            const diaVal = document.querySelector('select[name="filtro_dia"]').value;
+            
+            // Si elige un día específico, le indicamos al ExportController el tipo 'dia' con formato completo
+            if(diaVal && diaVal !== 'todos') {
+                document.getElementById('export_tipo_periodo').value = 'dia';
+                document.getElementById('export_periodo').value = mesVal + '-' + diaVal;
+            } else {
+                document.getElementById('export_tipo_periodo').value = 'mes';
+                document.getElementById('export_periodo').value = mesVal;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            sincronizarFormularioExportacion();
+            
+            document.getElementById('exportForm').addEventListener('submit', function() {
+                sincronizarFormularioExportacion();
+            });
+        });
+    </script>
 </x-app-layout>

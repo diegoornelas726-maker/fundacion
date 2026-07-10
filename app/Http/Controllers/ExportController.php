@@ -33,174 +33,254 @@ class ExportController extends Controller
 
         $tipo = $request->input('tipo_periodo', 'mes');
         $periodo = $request->input('periodo');
-        $tituloPeriodo = 'Reporte';
 
         if ($periodo) {
             if ($tipo === 'dia') {
                 $query->whereDate('created_at', $periodo);
-                $tituloPeriodo = 'Día '.Carbon::parse($periodo)->format('d-m-Y');
             } else {
                 $year = substr($periodo, 0, 4);
                 $month = substr($periodo, 5, 2);
-                $query->whereYear('created_at', $year)->whereMonth('created_at', $month);
-                $tituloPeriodo = $periodo;
+                $query->whereYear('created_at', $year)
+                      ->whereMonth('created_at', $month);
             }
-        } else {
-            $query->whereYear('created_at', date('Y'))->whereMonth('created_at', date('m'));
-            $tituloPeriodo = date('Y-m');
         }
 
-        $rows = $query->latest()->get();
-        $formato = $request->input('formato', 'pdf');
+        $rows = $query->orderBy('apellido_paterno')->get();
 
-        if ($formato === 'excel') {
-            $columnas = ['#', 'Nombre Completo', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Registro'];
-            $filas = [];
-            foreach ($rows as $r) {
-                $filas[] = [
-                    $r->id,
-                    "$r->nombre $r->apellido_paterno $r->apellido_materno",
-                    $r->curp ?? '—',
-                    $r->telefono ?? '—',
-                    $r->colonia ?? '—',
-                    $r->estado,
-                    $r->created_at->format('d/m/Y'),
-                ];
-            }
-
-            return $this->csv($columnas, $filas, 'beneficiarios_'.$tipo.'_'.$periodo);
+        if ($request->input('format') === 'pdf') {
+            return $this->pdf($rows, 'beneficiarios.pdf', 'beneficiarios_reporte', $periodo);
         }
 
-        // CORRECCIÓN: Apuntamos correctamente a la ruta de la vista de beneficiarios 'beneficiarios.pdf'
-        // Si tu archivo está en resources/views/pdf.blade.php cambia 'beneficiarios.pdf' por 'pdf'
-        return $this->pdfExport('beneficiarios.pdf', $rows, 'beneficiarios_reporte', $tituloPeriodo);
+        $columnas = ['ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 'CURP', 'Teléfono', 'Colonia', 'Estado', 'Fecha Registro'];
+        $filas = [];
+        foreach ($rows as $b) {
+            $filas[] = [
+                $b->id,
+                $b->nombre,
+                $b->apellido_paterno,
+                $b->apellido_materno,
+                $b->curp,
+                $b->telefono,
+                $b->colonia,
+                $b->estado,
+                $b->created_at ? $b->created_at->format('d/m/Y') : '',
+            ];
+        }
+
+        return $this->excelNativo($columnas, $filas, 'beneficiarios_reporte');
     }
 
-    public function apoyos(Request $request)
+    /**
+     * Exporta el historial de asistencias con colores fijos estilo Modo Oscuro de la App
+     */
+    public function asistencia(Request $request)
     {
-        $query = Apoyo::with('beneficiario');
-
-        if ($request->filled('buscar')) {
-            $b = $request->buscar;
-            $query->where(function ($q) use ($b) {
-                $q->where('tipo_apoyo', 'like', "%$b%")
-                  ->orWhereHas('beneficiario', fn($q2) =>
-                      $q2->where('nombre', 'like', "%$b%")
-                         ->orWhere('apellido_paterno', 'like', "%$b%")
-                  );
-            });
-        }
-
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
         $tipo = $request->input('tipo_periodo', 'mes');
         $periodo = $request->input('periodo');
-        $tituloPeriodo = 'Reporte';
+
+        $query = Asistencia::with('beneficiario');
 
         if ($periodo) {
             if ($tipo === 'dia') {
-                $query->whereDate('fecha_apoyo', $periodo);
-                $tituloPeriodo = 'Día ' . Carbon::parse($periodo)->format('d-m-Y');
+                $query->whereDate('fecha', $periodo);
             } else {
                 $year = substr($periodo, 0, 4);
                 $month = substr($periodo, 5, 2);
-                $query->whereYear('fecha_apoyo', $year)->whereMonth('fecha_apoyo', $month);
-                $tituloPeriodo = $periodo;
+                $query->whereYear('fecha', $year)
+                      ->whereMonth('fecha', $month);
             }
-        } else {
-            $query->whereYear('fecha_apoyo', date('Y'))->whereMonth('fecha_apoyo', date('m'));
-            $tituloPeriodo = date('Y-m');
         }
 
-        $rows = $query->latest('fecha_apoyo')->get();
-        $formato = $request->input('formato', 'pdf');
+        $registros = $query->orderBy('fecha', 'desc')->get();
 
-        if ($formato === 'excel') {
-            $columnas = ['#', 'Beneficiario', 'Descripción / Beneficio', 'Tipo de Apoyo', 'Monto', 'Fecha de Apoyo', 'Estado'];
-            $filas = [];
-            foreach ($rows as $r) {
-                $nombreCompleto = $r->beneficiario 
-                    ? "{$r->beneficiario->nombre} {$r->beneficiario->apellido_paterno} {$r->beneficiario->apellido_materno}"
-                    : 'No asignado';
+        $totalPresentes = 0;
+        $totalAusentes = 0;
 
-                $filas[] = [
-                    $r->id,
-                    $nombreCompleto,
-                    $r->descripcion ?? '—',
-                    $r->tipo_apoyo,
-                    $r->monto ? "$" . number_format($r->monto, 2) : '—',
-                    Carbon::parse($r->fecha_apoyo)->format('d/m/Y'),
-                    $r->estado
-                ];
+        $columnasTabla1 = ['Día', 'Mes', 'Año', 'Nombre', 'Estado'];
+        $filasTabla1 = [];
+
+        foreach ($registros as $reg) {
+            $fechaReg = $reg->fecha ? Carbon::parse($reg->fecha) : null;
+            
+            $dia = $fechaReg ? $fechaReg->format('d') : '—';
+            $mes = $fechaReg ? ucfirst($fechaReg->locale('es')->isoFormat('MMMM')) : '—';
+            $ano = $fechaReg ? $fechaReg->format('Y') : '—';
+
+            // Lógica correcta obtenida de tu AsistenciaController para determinar nombres
+            $nombre = $reg->beneficiario 
+                ? $reg->beneficiario->nombre . ' ' . $reg->beneficiario->apellido_paterno . ' ' . $reg->beneficiario->apellido_materno 
+                : $reg->nombre_visitante; 
+            
+            if ($reg->presente) {
+                $estado = 'Presente';
+                $totalPresentes++;
+            } else {
+                $estado = 'Ausente';
+                $totalAusentes++;
             }
 
-            return $this->csv($columnas, $filas, 'apoyos_'.$tipo.'_'.$periodo);
+            $filasTabla1[] = [$dia, $mes, $ano, $nombre, $estado];
         }
 
-        $parsed = $this->parseMes($tituloPeriodo);
-        if ($parsed) {
-            $tituloPeriodo = ucfirst($parsed->locale('es')->isoFormat('MMMM [de] YYYY'));
+        $columnasFinales = ['Día', 'Mes', 'Año', 'Nombre', 'Estado', '', 'Concepto', 'Total'];
+        $filasFinales = [];
+
+        $resumenTotales = [
+            0 => ['Total Presentes', $totalPresentes],
+            1 => ['Total Ausentes', $totalAusentes]
+        ];
+
+        $maxFilas = max(count($filasTabla1), count($resumenTotales));
+
+        for ($i = 0; $i < $maxFilas; $i++) {
+            $fila = [];
+
+            if (isset($filasTabla1[$i])) {
+                $fila = $filasTabla1[$i];
+            } else {
+                $fila = ['', '', '', '', ''];
+            }
+
+            $fila[] = ''; // Separador
+
+            if (isset($resumenTotales[$i])) {
+                $fila[] = $resumenTotales[$i][0];
+                $fila[] = $resumenTotales[$i][1];
+            } else {
+                $fila[] = '';
+                $fila[] = '';
+            }
+
+            $filasFinales[] = $fila;
         }
 
-        $pdf = Pdf::loadView('apoyos.pdf', [
-            'apoyos' => $rows,
-            'mes' => $tituloPeriodo
-        ]);
-
-        return $pdf->download('apoyos_reporte_'.$tipo.'_'.$periodo.'.pdf');
+        return $this->excelNativoAsistencia($columnasFinales, $filasFinales, 'reporte_asistencias');
     }
 
     public function actividades(Request $request)
     {
-        $query = Actividad::query();
-        $rows = $query->latest()->get();
-
-        return $this->csv(['ID', 'Nombre', 'Fecha'], $rows->toArray(), 'actividades');
+        return redirect()->back(); 
     }
 
-    public function asistencia(Request $request)
+    /**
+     * Renderiza las asistencias manteniendo el Modo Oscuro de la app en Excel de forma permanente
+     */
+    private function excelNativoAsistencia(array $columnas, array $filas, string $slug): StreamedResponse
     {
-        $query = Asistencia::query();
-        $rows = $query->latest()->get();
+        $filename = $slug.'.xls';
 
-        return $this->csv(['ID', 'Fecha'], $rows->toArray(), 'asistencia');
+        return response()->streamDownload(function () use ($columnas, $filas) {
+            echo "<meta charset='utf-8'>";
+            // Forzamos un contenedor oscuro global con bordes finos e idénticos a tu layout
+            echo "<table border='1' style='font-family: Arial, sans-serif; border-collapse: collapse; background-color: #121214; border-color: #2e2e33;'>";
+            
+            // Encabezados
+            echo "<tr style='font-weight: bold;'>";
+            foreach ($columnas as $index => $col) {
+                if ($index < 5) {
+                    echo "<td style='background-color: #1a1a1e; color: #a1a1aa; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
+                } elseif ($index == 5) {
+                    echo "<td style='border: none; background-color: #121214; width: 30px;'></td>";
+                } else {
+                    echo "<td style='background-color: #1e1b4b; color: #818cf8; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
+                }
+            }
+            echo "</tr>";
+            
+            // Celdas de datos con fondo oscuro e inmunidad ante cambios de tema
+            foreach ($filas as $fila) {
+                echo "<tr>";
+                foreach ($fila as $index => $celda) {
+                    if ($index < 5) {
+                        $styleCelda = "padding: 8px 12px; color: #e4e4e7; background-color: #18181a; font-size: 13.5px;";
+                        
+                        if ($index === 4) {
+                            if ($celda === 'Presente') {
+                                $styleCelda .= " color: #34d399; background-color: rgba(52, 211, 153, 0.1); font-weight: bold;";
+                            } elseif ($celda === 'Ausente') {
+                                $styleCelda .= " color: #f87171; background-color: rgba(248, 113, 113, 0.1); font-weight: bold;";
+                            }
+                        }
+                        echo "<td style='{$styleCelda}'>".htmlspecialchars((string)$celda)."</td>";
+                    } elseif ($index == 5) {
+                        echo "<td style='border: none; background-color: #121214;'></td>";
+                    } else {
+                        $styleTotales = "padding: 8px 12px; font-size: 13.5px; background-color: #1c1917; font-weight: bold;";
+                        if (strpos((string)$fila[6], 'Presentes') !== false) {
+                            $styleTotales .= " color: #34d399;";
+                        } elseif (strpos((string)$fila[6], 'Ausentes') !== false) {
+                            $styleTotales .= " color: #f87171;";
+                        } else {
+                            $styleTotales .= " color: #a1a1aa;";
+                        }
+                        echo "<td style='{$styleTotales}'>".htmlspecialchars((string)$celda)."</td>";
+                    }
+                }
+                echo "</tr>";
+            }
+            
+            echo "</table>";
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
-    private function pdfExport(string $view, $rows, string $slug, ?string $mes): \Illuminate\Http\Response
+    /**
+     * Renderiza los beneficiarios manteniendo la consistencia visual oscura
+     */
+    private function excelNativo(array $columnas, array $filas, string $slug): StreamedResponse
     {
-        $view = str_replace('.blade.php', '', $view);
-        
-        if (! view()->exists($view)) {
-            abort(444, "Vista [{$view}] no encontrada.");
-        }
+        $filename = $slug.'.xls';
 
-        $titulo = $this->tituloConMes(ucfirst(str_replace('_reporte', '', $slug)), $mes);
+        return response()->streamDownload(function () use ($columnas, $filas) {
+            echo "<meta charset='utf-8'>";
+            echo "<table border='1' style='font-family: Arial, sans-serif; border-collapse: collapse; background-color: #121214; border-color: #2e2e33;'>";
+            
+            // Encabezado
+            echo "<tr style='background-color: #1a1a1e; font-weight: bold;'>";
+            foreach ($columnas as $col) {
+                echo "<td style='padding: 8px 12px; color: #a1a1aa; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
+            }
+            echo "</tr>";
+            
+            // Filas estables
+            foreach ($filas as $fila) {
+                echo "<tr>";
+                foreach ($fila as $index => $celda) {
+                    $styleCelda = "padding: 8px 12px; color: #e4e4e7; background-color: #18181a; font-size: 13.5px;";
+                    // Conserva tus etiquetas de Estado (Activo / Inactivo) con colores armoniosos
+                    if ($index === 7) {
+                        if ($celda === 'Activo') {
+                            $styleCelda .= " color: #34d399; font-weight: bold;";
+                        } else {
+                            $styleCelda .= " color: #ef4444; font-weight: bold;";
+                        }
+                    }
+                    echo "<td style='{$styleCelda}'>".htmlspecialchars((string)$celda)."</td>";
+                }
+                echo "</tr>";
+            }
+            
+            echo "</table>";
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    private function pdf($rows, string $view, string $slug, ?string $mes)
+    {
+        $titulo = $this->tituloConMes(ucfirst(str_replace('_', ' ', $slug)), $mes);
 
         $pdf = Pdf::loadView($view, [
-            'beneficiarios' => $rows, 
+            'beneficiarios' => $rows,
             'mes' => $titulo,
         ]);
 
         $suffix = $mes ? '_'.str_replace(' ', '_', $mes) : '';
 
         return $pdf->download($slug.$suffix.'.pdf');
-    }
-
-    private function csv(array $columnas, array $filas, string $slug): StreamedResponse
-    {
-        $filename = $slug.'.csv';
-
-        return response()->streamDownload(function () use ($columnas, $filas) {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, $columnas);
-            foreach ($filas as $fila) {
-                fputcsv($out, $fila);
-            }
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     private function tituloConMes(string $base, ?string $mes): string
@@ -224,10 +304,9 @@ class ExportController extends Controller
         if (preg_match('/^\d{4}-\d{2}$/', $str)) {
             return Carbon::createFromFormat('Y-m', $str);
         }
-        if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $str)) {
-            return Carbon::createFromFormat('d-m-Y', $str);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $str)) {
+            return Carbon::createFromFormat('Y-m-d', $str);
         }
-
         return null;
     }
 }

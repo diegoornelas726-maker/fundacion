@@ -56,13 +56,13 @@ class ApoyoController extends Controller
     }
 
     /**
-     * EXPORTAR A EXCEL/CSV CON LOS MISMOS FILTROS DE LA TABLA
+     * EXPORTAR A EXCEL/CSV O PDF CON LOS MISMOS FILTROS DE LA TABLA
      */
     public function export(Request $request)
     {
         $query = Apoyo::with('beneficiario');
 
-        // 1. Aplicar exactamente los mismos filtros que en el index
+        // Aplicar filtros idénticos al index
         if ($request->filled('buscar')) {
             $b = $request->buscar;
             $query->where(function ($q) use ($b) {
@@ -98,7 +98,18 @@ class ApoyoController extends Controller
 
         $apoyos = $query->latest('fecha_apoyo')->get();
 
-        // 2. Configurar cabeceras de descarga para Excel/CSV nativo
+        // GENERACIÓN EN CASO DE SOLICITAR PDF
+        if ($request->formato === 'pdf') {
+            $mesTexto = $request->filled('periodo') ? date('m/Y', strtotime($request->periodo)) : date('m/Y');
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('apoyos.pdf', [
+                'apoyos' => $apoyos,
+                'mes'    => "Periodo: " . $mesTexto
+            ]);
+            
+            return $pdf->download("reporte_apoyos_" . date('Ymd_His') . ".pdf");
+        }
+
+        // GENERACIÓN POR DEFECTO EN CASO DE EXCEL / CSV
         $filename = "apoyos_reporte_" . date('Ymd_His') . ".csv";
         
         $headers = [
@@ -109,17 +120,12 @@ class ApoyoController extends Controller
             "Expires"             => "0"
         ];
 
-        // 3. Crear el flujo del archivo estructurado
         $callback = function() use($apoyos) {
             $file = fopen('php://output', 'w');
-            
-            // Añadir la marca de orden de bytes (BOM) para que Excel detecte los acentos correctamente
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
 
-            // Encabezados correctos de las columnas para Apoyos
             fputcsv($file, ['#', 'Beneficiario', 'Descripción / Beneficio', 'Tipo de Apoyo', 'Monto', 'Fecha de Apoyo', 'Estado']);
 
-            // Rellenar las filas (si no hay datos, el archivo se descargará limpio solo con los encabezados)
             foreach ($apoyos as $apoyo) {
                 $nombreCompleto = $apoyo->beneficiario 
                     ? "{$apoyo->beneficiario->nombre} {$apoyo->beneficiario->apellido_paterno} {$apoyo->beneficiario->apellido_materno}"
@@ -135,7 +141,6 @@ class ApoyoController extends Controller
                     $apoyo->estado
                 ]);
             }
-
             fclose($file);
         };
 

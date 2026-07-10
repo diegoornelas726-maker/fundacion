@@ -40,104 +40,76 @@ class AsistenciaController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        $presentesCount = $registros->where('presente', true)->count()
-            + $visitantes->where('presente', true)->count();
+        $presentesCount = $registros->where('presente', true)->count() + $visitantes->where('presente', true)->count();
 
-        return view('asistencia.index', [
-            'fecha' => $fecha,
-            'buscar' => $buscar,
-            'beneficiarios' => $beneficiarios,
-            'registros' => $registros,
-            'visitantes' => $visitantes,
-            'presentesCount' => $presentesCount,
-        ]);
+        return view('asistencia.index', compact(
+            'beneficiarios', 
+            'registros', 
+            'visitantes', 
+            'fecha', 
+            'buscar', 
+            'presentesCount'
+        ));
     }
 
     /**
-     * Guarda la asistencia del día (presente/ausente por beneficiario).
+     * Guarda el listado de asistencia de forma correcta sincronizado con la vista.
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'fecha' => ['required', 'date'],
-            'estado' => ['array'],
-            'estado.*' => ['in:0,1'],
-        ]);
+        $fecha = $this->parseFecha($request->input('fecha'))->format('Y-m-d');
+        
+        $estados = $request->input('estado', []);
+        $observaciones = $request->input('observaciones', []);
 
-        $fecha = Carbon::parse($data['fecha'])->toDateString();
-        $estado = $request->input('estado', []);
-
-        $ids = Beneficiario::pluck('id');
-
-        foreach ($ids as $id) {
-            $isPres = isset($estado[$id]) && (string) $estado[$id] === '1';
+        foreach ($estados as $bId => $status) {
             Asistencia::updateOrCreate(
-                ['fecha' => $fecha, 'beneficiario_id' => $id],
-                ['presente' => $isPres],
+                ['fecha' => $fecha, 'beneficiario_id' => $bId],
+                [
+                    'presente' => ($status == '1'), 
+                    'observaciones' => $observaciones[$bId] ?? null
+                ]
             );
         }
 
-        return redirect()
-            ->route('asistencia.index', ['fecha' => $fecha])
-            ->with('success', 'Asistencia guardada correctamente.');
+        return redirect()->route('asistencia.index', ['fecha' => $fecha])
+            ->with('success', 'Asistencias guardadas correctamente.');
     }
 
     /**
-     * Registra un visitante que no es beneficiario.
+     * Vista agrupada por fechas con filtrado interactivo por Mes y Día independientes.
      */
-    public function storeVisitante(Request $request)
+    public function historial(Request $request)
     {
-        $data = $request->validate([
-            'fecha' => ['required', 'date'],
-            'nombre_visitante' => ['required', 'string', 'max:255'],
-        ]);
+        $query = Asistencia::selectRaw('fecha, COUNT(CASE WHEN presente = 1 THEN 1 END) as presentes, COUNT(*) as total')
+            ->groupBy('fecha');
 
-        Asistencia::create([
-            'fecha' => Carbon::parse($data['fecha'])->toDateString(),
-            'nombre_visitante' => $data['nombre_visitante'],
-            'presente' => true,
-        ]);
+        // CORRECCIÓN: Filtros independientes de Mes (YYYY-MM) y Día (DD)
+        $filtroMes = $request->input('filtro_mes', date('Y-m'));
+        $filtroDia = $request->input('filtro_dia');
 
-        return redirect()
-            ->route('asistencia.index', ['fecha' => $data['fecha']])
-            ->with('success', 'Visitante registrado.');
+        if ($filtroMes) {
+            $year = substr($filtroMes, 0, 4);
+            $month = substr($filtroMes, 5, 2);
+            $query->whereYear('fecha', $year)
+                  ->whereMonth('fecha', $month);
+        }
+
+        if ($filtroDia && $filtroDia !== 'todos') {
+            $query->whereDay('fecha', $filtroDia);
+        }
+
+        $fechas = $query->orderBy('fecha', 'desc')->paginate(15)->withQueryString();
+
+        return view('asistencia.historial', compact('fechas', 'filtroMes', 'filtroDia'));
     }
 
     /**
-     * Elimina un registro de asistencia de visitante.
-     */
-    public function destroyVisitante(Asistencia $asistencia)
-    {
-        $fecha = $asistencia->fecha->toDateString();
-        $asistencia->delete();
-
-        return redirect()
-            ->route('asistencia.index', ['fecha' => $fecha])
-            ->with('success', 'Visitante eliminado.');
-    }
-
-    /**
-     * Historial de asistencias agrupado por fecha.
-     */
-    public function historial()
-    {
-        $fechas = Asistencia::query()
-            ->selectRaw('fecha,
-                SUM(CASE WHEN presente = 1 THEN 1 ELSE 0 END) as presentes,
-                COUNT(*) as total')
-            ->groupBy('fecha')
-            ->orderByDesc('fecha')
-            ->paginate(15);
-
-        return view('asistencia.historial', ['fechas' => $fechas]);
-    }
-
-    /**
-     * Resumen de porcentaje de asistencia por beneficiario.
+     * Resumen general de asistencia acumulado por beneficiario.
      */
     public function personas()
     {
-        $personas = Beneficiario::query()
+        $personas = Beneficiario::select('id', 'nombre', 'apellido_paterno', 'apellido_materno')
             ->withCount([
                 'asistencias as total_dias',
                 'asistencias as dias_presente' => fn ($q) => $q->where('presente', true),
@@ -184,11 +156,44 @@ class AsistenciaController extends Controller
         return $pdf->download('asistencia-'.$fecha->format('Y-m-d').'.pdf');
     }
 
+    /**
+     * Registra un nuevo visitante para el día actual.
+     */
+    public function storeVisitante(Request $request)
+    {
+        $request->validate(['nombre_visitante' => 'required|string|max:150']);
+        $fecha = $this->parseFecha($request->input('fecha'))->format('Y-m-d');
+
+        Asistencia::create([
+            'fecha' => $fecha,
+            'nombre_visitante' => $request->nombre_visitante,
+            'presente' => true
+        ]);
+
+        return redirect()->route('asistencia.index', ['fecha' => $fecha])
+            ->with('success', 'Visitante agregado correctamente.');
+    }
+
+    /**
+     * Elimina el registro de un visitante.
+     */
+    public function destroyVisitante(Asistencia $asistencia)
+    {
+        $fecha = $asistencia->fecha ? $asistencia->fecha->format('Y-m-d') : date('Y-m-d');
+        $asistencia->delete();
+
+        return redirect()->route('asistencia.index', ['fecha' => $fecha])
+            ->with('success', 'Visitante eliminado correctamente.');
+    }
+
+    /**
+     * Parsea un string a un objeto Carbon seguro.
+     */
     private function parseFecha(?string $value): Carbon
     {
         try {
-            return $value ? Carbon::parse($value)->startOfDay() : Carbon::today();
-        } catch (\Throwable $e) {
+            return $value ? Carbon::parse($value) : Carbon::today();
+        } catch (\Exception $e) {
             return Carbon::today();
         }
     }

@@ -209,7 +209,6 @@
 
         .btn-del:hover { background: rgba(239,68,68,0.15); }
 
-        /* Estado vacío optimizado */
         .empty-state {
             text-align: center;
             padding: 30px 16px;
@@ -229,9 +228,6 @@
             justify-content: center;
         }
 
-        /* ════════════════════════════════════════════
-           SOPORTE DE TEMA CLARO PARA FILTROS E INPUTS DE FECHA
-           ════════════════════════════════════════════ */
         [data-theme="light"] .search-input,
         [data-theme="light"] .filter-select,
         [data-theme="light"] .period-input {
@@ -295,7 +291,7 @@
         </form>
 
         <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-            <form action="{{ route('apoyos.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;">
+            <form action="{{ route('apoyos.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;" id="exportForm">
                 <input type="hidden" name="buscar" value="{{ request('buscar') }}">
                 <input type="hidden" name="tipo" value="{{ request('tipo') }}">
                 <input type="hidden" name="tipo_periodo" value="{{ request('tipo_periodo', 'mes') }}">
@@ -391,23 +387,34 @@
 
             if (tipo === 'dia') {
                 let val = "{{ request('tipo_periodo') === 'dia' ? request('periodo') : date('Y-m-d') }}";
-                inputHtml = `<input type="date" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+                inputHtml = `<input type="date" name="periodo" id="input_periodo_dinamico" value="${val}" class="period-input" onchange="sincronizarYEnviar()">`;
             } else {
                 let val = "{{ request('tipo_periodo') === 'mes' || !request('tipo_periodo') ? request('periodo', date('Y-m')) : date('Y-m') }}";
-                inputHtml = `<input type="month" name="periodo" value="${val}" class="period-input" onchange="document.getElementById('searchForm').submit()">`;
+                inputHtml = `<input type="month" name="periodo" id="input_periodo_dinamico" value="${val}" class="period-input" onchange="sincronizarYEnviar()">`;
             }
 
             contenedor.innerHTML = inputHtml;
-            
-            // Sincroniza los valores con los campos ocultos del formulario de exportación
-            const inputOcultoPeriodo = document.querySelector('form[action*="exportar"] input[name="periodo"]');
-            const inputOcultoTipo = document.querySelector('form[action*="exportar"] input[name="tipo_periodo"]');
-            if(inputOcultoPeriodo) inputOcultoPeriodo.value = document.getElementsByName('periodo')[0]?.value || '';
-            if(inputOcultoTipo) inputOcultoTipo.value = tipo;
+            sincronizarFiltrosOcultos();
 
             if (event && event.type === 'change') {
                 form.submit();
             }
+        }
+
+        function sincronizarFiltrosOcultos() {
+            const elPeriodo = document.getElementById('input_periodo_dinamico');
+            const elTipoPeriodo = document.getElementById('tipo_periodo');
+            
+            const inputOcultoPeriodo = document.querySelector('#exportForm input[name="periodo"]');
+            const inputOcultoTipo = document.querySelector('#exportForm input[name="tipo_periodo"]');
+            
+            if(inputOcultoPeriodo && elPeriodo) inputOcultoPeriodo.value = elPeriodo.value;
+            if(inputOcultoTipo && elTipoPeriodo) inputOcultoTipo.value = elTipoPeriodo.value;
+        }
+
+        function sincronizarYEnviar() {
+            sincronizarFiltrosOcultos();
+            document.getElementById('searchForm').submit();
         }
 
         document.addEventListener("DOMContentLoaded", function() {
