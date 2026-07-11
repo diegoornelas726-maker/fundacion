@@ -56,7 +56,7 @@ class ApoyoController extends Controller
     }
 
     /**
-     * EXPORTAR A EXCEL/CSV O PDF CON LOS MISMOS FILTROS DE LA TABLA
+     * EXPORTAR A EXCEL (con estilo) O PDF CON LOS MISMOS FILTROS DE LA TABLA
      */
     public function export(Request $request)
     {
@@ -109,42 +109,92 @@ class ApoyoController extends Controller
             return $pdf->download("reporte_apoyos_" . date('Ymd_His') . ".pdf");
         }
 
-        // GENERACIÓN POR DEFECTO EN CASO DE EXCEL / CSV
-        $filename = "apoyos_reporte_" . date('Ymd_His') . ".csv";
-        
-        $headers = [
-            "Content-type"        => "text/csv; charset=UTF-8",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
+        // GENERACIÓN POR DEFECTO: EXCEL CON ESTILO (banner de marca, encabezados índigo, estado en color)
+        return $this->excelApoyos($apoyos, $request);
+    }
 
-        $callback = function() use($apoyos) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+    /**
+     * Renderiza los apoyos en un Excel claro, limpio y con la
+     * paleta de marca (índigo) usada en el resto del sistema
+     */
+    private function excelApoyos($apoyos, Request $request)
+    {
+        $filename = "apoyos_reporte_" . date('Ymd_His') . ".xls";
 
-            fputcsv($file, ['#', 'Beneficiario', 'Descripción / Beneficio', 'Tipo de Apoyo', 'Monto', 'Fecha de Apoyo', 'Estado']);
+        $periodoTexto = $request->filled('periodo')
+            ? date('m/Y', strtotime($request->periodo))
+            : date('m/Y');
 
-            foreach ($apoyos as $apoyo) {
-                $nombreCompleto = $apoyo->beneficiario 
+        return response()->streamDownload(function () use ($apoyos, $periodoTexto) {
+            echo "<meta charset='utf-8'>";
+            echo "<table border='0' cellpadding='0' cellspacing='0' style='font-family: Calibri, Arial, sans-serif; border-collapse: collapse; background-color: #ffffff;'>";
+
+            // Anchos de columna fijos
+            echo "<colgroup>";
+            echo "<col style='width:50px'>";   // #
+            echo "<col style='width:220px'>";  // Beneficiario
+            echo "<col style='width:260px'>";  // Descripción
+            echo "<col style='width:150px'>";  // Tipo de apoyo
+            echo "<col style='width:110px'>";  // Monto
+            echo "<col style='width:130px'>";  // Fecha
+            echo "<col style='width:130px'>";  // Estado
+            echo "</colgroup>";
+
+            // ── Título de ancho completo ──
+            echo "<tr><td colspan='7' style='background-color: #4f46e5; color: #ffffff; font-size: 22px; font-weight: bold; padding: 20px 22px 4px; border: none;'>Fundación Don Benjamín</td></tr>";
+            echo "<tr><td colspan='7' style='background-color: #4f46e5; color: #e0e7ff; font-size: 14px; padding: 0 22px 18px; border: none;'>Reporte de apoyos &middot; Periodo: {$periodoTexto} &middot; Generado el ".now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm')."</td></tr>";
+
+            // Filas de respiro
+            echo "<tr><td colspan='7' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+            echo "<tr><td colspan='7' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+
+            // ── Encabezados ──
+            echo "<tr>";
+            foreach (['#', 'Beneficiario', 'Descripción / Beneficio', 'Tipo de Apoyo', 'Monto', 'Fecha de Apoyo', 'Estado'] as $col) {
+                echo "<td style='background-color: #eef2ff; color: #3730a3; padding: 14px 16px; text-align: left; font-size: 13.5px; font-weight: bold; text-transform: uppercase; border: 1px solid #c7d2fe;'>".htmlspecialchars($col)."</td>";
+            }
+            echo "</tr>";
+
+            // ── Filas de datos ──
+            foreach ($apoyos as $rowIndex => $apoyo) {
+                $bgAlt = $rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                $nombreCompleto = $apoyo->beneficiario
                     ? "{$apoyo->beneficiario->nombre} {$apoyo->beneficiario->apellido_paterno} {$apoyo->beneficiario->apellido_materno}"
                     : '—';
 
-                fputcsv($file, [
-                    $apoyo->id,
-                    $nombreCompleto,
-                    $apoyo->descripcion ?? '—',
-                    $apoyo->tipo_apoyo,
-                    "$" . number_format($apoyo->monto, 2),
-                    date('d/m/Y', strtotime($apoyo->fecha_apoyo)),
-                    $apoyo->estado
-                ]);
-            }
-            fclose($file);
-        };
+                switch ($apoyo->estado) {
+                    case 'Entregado':
+                        $colorEstado = 'color: #059669; background-color: #ecfdf5;';
+                        break;
+                    case 'Pendiente':
+                        $colorEstado = 'color: #b45309; background-color: #fffbeb;';
+                        break;
+                    case 'Cancelado':
+                        $colorEstado = 'color: #dc2626; background-color: #fef2f2;';
+                        break;
+                    default:
+                        $colorEstado = 'color: #374151; background-color: '.$bgAlt.';';
+                }
 
-        return response()->stream($callback, 200, $headers);
+                $celdaBase = "padding: 13px 16px; color: #1f2937; background-color: {$bgAlt}; font-size: 14px; border: 1px solid #e5e7eb;";
+
+                echo "<tr>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($apoyo->id)."</td>";
+                echo "<td style='{$celdaBase} font-weight: bold;'>".htmlspecialchars($nombreCompleto)."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($apoyo->descripcion ?? '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($apoyo->tipo_apoyo)."</td>";
+                echo "<td style='{$celdaBase}'>$".htmlspecialchars(number_format($apoyo->monto ?? 0, 2))."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars(date('d/m/Y', strtotime($apoyo->fecha_apoyo)))."</td>";
+                echo "<td style='padding: 13px 16px; font-size: 14px; font-weight: bold; border: 1px solid #e5e7eb; {$colorEstado}'>".htmlspecialchars($apoyo->estado)."</td>";
+                echo "</tr>";
+            }
+
+            echo "</table>";
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function create()

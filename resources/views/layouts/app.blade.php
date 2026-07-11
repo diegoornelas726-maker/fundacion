@@ -24,6 +24,25 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* ════════════════════════════════════════════
+           TOKENS · LIQUID GLASS
+           ════════════════════════════════════════════ */
+        :root {
+            --glass-radius-lg: 28px;
+            --glass-radius: 22px;
+            --glass-radius-sm: 14px;
+            --glass-blur: 30px;
+            --glass-blur-strong: 46px;
+            --glass-border: 1px solid rgba(255,255,255,0.14);
+            --glass-sheen: linear-gradient(128deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 36%);
+            --glass-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+        }
+        [data-theme="light"] {
+            --glass-border: 1px solid rgba(255,255,255,0.7);
+            --glass-sheen: linear-gradient(128deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 40%);
+            --glass-shadow: 0 10px 40px rgba(24,24,27,0.10), inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
             background-color: #09090b;
@@ -45,26 +64,34 @@
         }
 
         .orb-1 {
-            width: 580px; height: 580px;
-            background: radial-gradient(circle, rgba(79,70,229,0.12) 0%, transparent 70%);
-            top: -220px; left: -160px;
-            animation-duration: 14s;
+            width: 640px; height: 640px;
+            background: radial-gradient(circle, rgba(79,70,229,0.22) 0%, transparent 70%);
+            top: -240px; left: -180px;
+            animation-duration: 16s;
         }
 
         .orb-2 {
-            width: 480px; height: 480px;
-            background: radial-gradient(circle, rgba(59,130,246,0.09) 0%, transparent 70%);
-            bottom: -180px; right: -120px;
-            animation-duration: 18s;
+            width: 540px; height: 540px;
+            background: radial-gradient(circle, rgba(59,130,246,0.16) 0%, transparent 70%);
+            bottom: -200px; right: -140px;
+            animation-duration: 20s;
             animation-delay: -6s;
         }
 
         .orb-3 {
-            width: 280px; height: 280px;
-            background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
-            top: 55%; left: 65%;
-            animation-duration: 10s;
+            width: 360px; height: 360px;
+            background: radial-gradient(circle, rgba(168,85,247,0.14) 0%, transparent 70%);
+            top: 50%; left: 62%;
+            animation-duration: 12s;
             animation-delay: -3s;
+        }
+
+        .orb-4 {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, rgba(56,189,248,0.13) 0%, transparent 70%);
+            top: 12%; left: 38%;
+            animation-duration: 15s;
+            animation-delay: -9s;
         }
 
         @keyframes drift {
@@ -108,21 +135,39 @@
             100% { transform: translateY(-10vh) rotate(540deg); opacity: 0; }
         }
 
-        /* ── Navbar ── */
+        /* ── Navbar · isla de cristal flotante ── */
         .navbar {
-            background: rgba(12, 12, 14, 0.85);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            backdrop-filter: blur(14px);
+            max-width: 1240px;
+            width: calc(100% - 32px);
+            margin: 16px auto 0;
+            background: rgba(255,255,255,0.055);
+            border: var(--glass-border);
+            border-radius: var(--glass-radius-lg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            box-shadow: var(--glass-shadow);
             position: sticky;
-            top: 0;
+            top: 16px;
             z-index: 50;
-            transition: box-shadow 0.3s, background 0.3s;
+            isolation: isolate;
+            transition: box-shadow 0.35s ease, background 0.35s ease, top 0.35s ease, border-radius 0.35s ease;
+        }
+
+        .navbar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: var(--glass-sheen);
+            opacity: 0.8;
+            pointer-events: none;
+            z-index: 0;
         }
 
         .navbar.scrolled {
-            background: rgba(10, 10, 12, 0.97);
-            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-            border-bottom-color: rgba(255,255,255,0.09);
+            top: 10px;
+            background: rgba(20,20,26,0.5);
+            box-shadow: 0 18px 54px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
         }
 
         .navbar-inner {
@@ -133,6 +178,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            z-index: 1;
         }
 
         .nav-logo {
@@ -191,8 +238,8 @@
         }
 
         .nav-link {
-            padding: 6px 12px;
-            border-radius: 8px;
+            padding: 6px 14px;
+            border-radius: var(--glass-radius-sm);
             font-size: 13.5px;
             font-weight: 500;
             color: #71717a;
@@ -232,10 +279,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.07);
+            padding: 6px 14px 6px 6px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
             cursor: pointer;
             font-size: 13.5px;
             font-weight: 500;
@@ -269,15 +317,16 @@
 
         .dropdown-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            top: calc(100% + 10px);
             right: 0;
-            min-width: 180px;
-            background: rgba(18,18,20,0.98);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 12px;
+            min-width: 190px;
+            background: rgba(255,255,255,0.06);
+            border: var(--glass-border);
+            border-radius: var(--glass-radius);
             padding: 6px;
-            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.14);
+            backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(180%);
             transform-origin: top right;
             transform: scale(0.94) translateY(-6px);
             opacity: 0;
@@ -345,7 +394,9 @@
         /* ── Page header ── */
         .page-header {
             border-bottom: 1px solid rgba(255,255,255,0.06);
-            background: rgba(12,12,14,0.5);
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
             position: relative;
             z-index: 10;
         }
@@ -382,9 +433,10 @@
         .theme-toggle {
             width: 38px;
             height: 38px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: var(--glass-radius-sm);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(10px);
             color: #a1a1aa;
             cursor: pointer;
             display: flex;
@@ -424,12 +476,11 @@
         }
 
         [data-theme="light"] .navbar {
-            background: rgba(255,255,255,0.85);
-            border-bottom-color: rgba(0,0,0,0.07);
+            background: rgba(255,255,255,0.5);
         }
         [data-theme="light"] .navbar.scrolled {
-            background: rgba(255,255,255,0.97);
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.75);
+            box-shadow: 0 18px 54px rgba(24,24,27,0.14), inset 0 1px 0 rgba(255,255,255,0.9);
         }
         [data-theme="light"] .nav-logo-text { color: #18181b; }
         [data-theme="light"] .nav-link { color: #71717a; }
@@ -438,17 +489,15 @@
 
         [data-theme="light"] .nav-user-btn,
         [data-theme="light"] .theme-toggle {
-            background: rgba(0,0,0,0.03);
-            border-color: rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.45);
+            border-color: rgba(255,255,255,0.75);
             color: #52525b;
         }
         [data-theme="light"] .nav-user-btn:hover,
-        [data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.06); color: #18181b; }
+        [data-theme="light"] .theme-toggle:hover { background: rgba(255,255,255,0.7); color: #18181b; }
 
         [data-theme="light"] .dropdown-menu {
-            background: rgba(255,255,255,0.98);
-            border-color: rgba(0,0,0,0.08);
-            box-shadow: 0 16px 48px rgba(0,0,0,0.14);
+            background: rgba(255,255,255,0.65);
         }
         [data-theme="light"] .dropdown-header { border-bottom-color: rgba(0,0,0,0.07); }
         [data-theme="light"] .dropdown-header-name { color: #18181b; }
@@ -456,7 +505,7 @@
         [data-theme="light"] .dropdown-item:hover { background: rgba(0,0,0,0.05); color: #18181b; }
 
         [data-theme="light"] .page-header {
-            background: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.3);
             border-bottom-color: rgba(0,0,0,0.07);
         }
         [data-theme="light"] .page-header h1 { color: #18181b; }
@@ -465,9 +514,9 @@
         [data-theme="light"] .welcome-card,
         [data-theme="light"] .stat-card,
         [data-theme="light"] .table-card {
-            background: rgba(255,255,255,0.9);
-            border-color: rgba(0,0,0,0.07);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+            background: rgba(255,255,255,0.55);
+            border-color: rgba(255,255,255,0.75);
+            box-shadow: 0 8px 32px rgba(24,24,27,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
         }
         [data-theme="light"] .welcome-text h2,
         [data-theme="light"] .stat-number,
@@ -552,6 +601,7 @@
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
 
     <!-- Partículas flotantes -->
     <div class="particles" id="particles"></div>

@@ -106,8 +106,74 @@
         }
         .btn-ex svg { width: 15px; height: 15px; }
 
+        .btn-ex-pdf {
+            background: rgba(239,68,68,0.1);
+            border-color: rgba(239,68,68,0.2);
+            color: #f87171;
+        }
+        .btn-ex-pdf:hover {
+            background: rgba(239,68,68,0.18);
+            border-color: rgba(239,68,68,0.3);
+            color: #fca5a5;
+        }
+
         .empty { padding: 40px 20px !important; text-align: center; color: #71717a !important; font-size: 14px; }
         .pagi { padding: 16px 20px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+
+        /* ── Modo claro ── */
+        [data-theme="light"] .hist-card {
+            background: rgba(255,255,255,0.9);
+            border-color: rgba(0,0,0,0.07);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        [data-theme="light"] .hist-table th {
+            background: rgba(0,0,0,0.02);
+            border-bottom-color: rgba(0,0,0,0.08);
+            color: #71717a;
+        }
+        [data-theme="light"] .hist-table td {
+            color: #52525b;
+            border-bottom-color: rgba(0,0,0,0.05);
+        }
+        [data-theme="light"] .hist-table td strong {
+            color: #18181b;
+        }
+        [data-theme="light"] .hist-table tr:hover td {
+            background: rgba(0,0,0,0.03);
+        }
+        [data-theme="light"] .filter-label { color: #71717a; }
+        [data-theme="light"] .filter-select,
+        [data-theme="light"] .period-input {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.1);
+            color: #18181b;
+        }
+        [data-theme="light"] .filter-select option { background: #fff; }
+        [data-theme="light"] .btn-ex {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.1);
+            color: #52525b;
+        }
+        [data-theme="light"] .btn-ex:hover {
+            background: #18181b;
+            border-color: #18181b;
+            color: #fff;
+        }
+        [data-theme="light"] .btn-ex-pdf {
+            background: rgba(239,68,68,0.08);
+            border-color: rgba(239,68,68,0.18);
+            color: #dc2626;
+        }
+        [data-theme="light"] .btn-ex-pdf:hover {
+            background: rgba(239,68,68,0.16);
+            border-color: rgba(239,68,68,0.3);
+            color: #b91c1c;
+        }
+        [data-theme="light"] .empty { color: #71717a; }
+        [data-theme="light"] .pagi { border-top-color: rgba(0,0,0,0.07); }
+        [data-theme="light"] .period-input::-webkit-calendar-picker-indicator {
+            filter: none;
+        }
     </style>
 
     <div class="hist-top">
@@ -129,10 +195,14 @@
             </div>
         </form>
 
-        <form action="{{ route('asistencia.export') }}" method="GET" id="exportForm">
+        <form action="{{ route('asistencia.export') }}" method="GET" id="exportForm" style="display:flex; gap:8px;">
             <input type="hidden" name="tipo_periodo" id="export_tipo_periodo" value="mes">
             <input type="hidden" name="periodo" id="export_periodo" value="{{ $filtroMes }}">
-            <button type="submit" class="btn-ex">
+            <button type="submit" name="formato" value="pdf" class="btn-ex btn-ex-pdf">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                PDF
+            </button>
+            <button type="submit" name="formato" value="excel" class="btn-ex">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4M7 10l5 5 5-5M12 15V3"/></svg>
                 Exportar Excel
             </button>

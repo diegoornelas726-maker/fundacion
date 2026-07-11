@@ -71,7 +71,8 @@ class ExportController extends Controller
     }
 
     /**
-     * Exporta el historial de asistencias con colores fijos estilo Modo Oscuro de la App
+     * Exporta el historial de asistencias agrupado por fecha, con diseño
+     * claro, limpio y profesional
      */
     public function asistencia(Request $request)
     {
@@ -96,65 +97,60 @@ class ExportController extends Controller
         $totalPresentes = 0;
         $totalAusentes = 0;
 
-        $columnasTabla1 = ['Día', 'Mes', 'Año', 'Nombre', 'Estado'];
-        $filasTabla1 = [];
+        // Agrupamos los registros por fecha (Y-m-d) para mostrarlos con
+        // un encabezado de fecha legible en vez de repetir Día/Mes/Año en cada fila
+        $grupos = $registros->groupBy(function ($reg) {
+            return $reg->fecha ? Carbon::parse($reg->fecha)->format('Y-m-d') : 'sin-fecha';
+        });
 
-        foreach ($registros as $reg) {
-            $fechaReg = $reg->fecha ? Carbon::parse($reg->fecha) : null;
-            
-            $dia = $fechaReg ? $fechaReg->format('d') : '—';
-            $mes = $fechaReg ? ucfirst($fechaReg->locale('es')->isoFormat('MMMM')) : '—';
-            $ano = $fechaReg ? $fechaReg->format('Y') : '—';
+        $estructura = [];
 
-            // Lógica correcta obtenida de tu AsistenciaController para determinar nombres
-            $nombre = $reg->beneficiario 
-                ? $reg->beneficiario->nombre . ' ' . $reg->beneficiario->apellido_paterno . ' ' . $reg->beneficiario->apellido_materno 
-                : $reg->nombre_visitante; 
-            
-            if ($reg->presente) {
-                $estado = 'Presente';
-                $totalPresentes++;
-            } else {
-                $estado = 'Ausente';
-                $totalAusentes++;
+        foreach ($grupos as $fechaKey => $items) {
+            $personas = [];
+
+            foreach ($items as $reg) {
+                $nombre = $reg->beneficiario
+                    ? $reg->beneficiario->nombre . ' ' . $reg->beneficiario->apellido_paterno . ' ' . $reg->beneficiario->apellido_materno
+                    : $reg->nombre_visitante;
+
+                if ($reg->presente) {
+                    $estado = 'Presente';
+                    $totalPresentes++;
+                } else {
+                    $estado = 'Ausente';
+                    $totalAusentes++;
+                }
+
+                $personas[] = [$nombre, $estado];
             }
 
-            $filasTabla1[] = [$dia, $mes, $ano, $nombre, $estado];
+            $estructura[] = [
+                'fecha'    => $fechaKey !== 'sin-fecha' ? Carbon::parse($fechaKey) : null,
+                'personas' => $personas,
+            ];
         }
 
-        $columnasFinales = ['Día', 'Mes', 'Año', 'Nombre', 'Estado', '', 'Concepto', 'Total'];
-        $filasFinales = [];
+        return $request->formato === 'pdf'
+            ? $this->pdfAsistencia($estructura, $totalPresentes, $totalAusentes, $periodo)
+            : $this->excelNativoAsistencia($estructura, $totalPresentes, $totalAusentes, 'reporte_asistencias');
+    }
 
-        $resumenTotales = [
-            0 => ['Total Presentes', $totalPresentes],
-            1 => ['Total Ausentes', $totalAusentes]
-        ];
+    /**
+     * Genera el PDF del historial de asistencias, agrupado por fecha,
+     * con el mismo diseño de marca que el Excel
+     */
+    private function pdfAsistencia(array $grupos, int $totalPresentes, int $totalAusentes, ?string $periodo)
+    {
+        $titulo = $this->tituloConMes('Reporte de asistencias', $periodo);
 
-        $maxFilas = max(count($filasTabla1), count($resumenTotales));
+        $pdf = Pdf::loadView('asistencia.historial_pdf', [
+            'grupos'         => $grupos,
+            'totalPresentes' => $totalPresentes,
+            'totalAusentes'  => $totalAusentes,
+            'titulo'         => $titulo,
+        ]);
 
-        for ($i = 0; $i < $maxFilas; $i++) {
-            $fila = [];
-
-            if (isset($filasTabla1[$i])) {
-                $fila = $filasTabla1[$i];
-            } else {
-                $fila = ['', '', '', '', ''];
-            }
-
-            $fila[] = ''; // Separador
-
-            if (isset($resumenTotales[$i])) {
-                $fila[] = $resumenTotales[$i][0];
-                $fila[] = $resumenTotales[$i][1];
-            } else {
-                $fila[] = '';
-                $fila[] = '';
-            }
-
-            $filasFinales[] = $fila;
-        }
-
-        return $this->excelNativoAsistencia($columnasFinales, $filasFinales, 'reporte_asistencias');
+        return $pdf->download('reporte_asistencias_'.date('Ymd_His').'.pdf');
     }
 
     public function actividades(Request $request)
@@ -163,62 +159,86 @@ class ExportController extends Controller
     }
 
     /**
-     * Renderiza las asistencias manteniendo el Modo Oscuro de la app en Excel de forma permanente
+     * Renderiza el historial de asistencias agrupado por fecha, con la
+     * paleta de marca (índigo) usada en el resto del sistema (PDF, navbar, etc.)
+     *
+     * $grupos: array de ['fecha' => Carbon|null, 'personas' => [[nombre, estado], ...]]
      */
-    private function excelNativoAsistencia(array $columnas, array $filas, string $slug): StreamedResponse
+    private function excelNativoAsistencia(array $grupos, int $totalPresentes, int $totalAusentes, string $slug): StreamedResponse
     {
         $filename = $slug.'.xls';
 
-        return response()->streamDownload(function () use ($columnas, $filas) {
+        return response()->streamDownload(function () use ($grupos, $totalPresentes, $totalAusentes) {
             echo "<meta charset='utf-8'>";
-            // Forzamos un contenedor oscuro global con bordes finos e idénticos a tu layout
-            echo "<table border='1' style='font-family: Arial, sans-serif; border-collapse: collapse; background-color: #121214; border-color: #2e2e33;'>";
-            
-            // Encabezados
-            echo "<tr style='font-weight: bold;'>";
-            foreach ($columnas as $index => $col) {
-                if ($index < 5) {
-                    echo "<td style='background-color: #1a1a1e; color: #a1a1aa; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
-                } elseif ($index == 5) {
-                    echo "<td style='border: none; background-color: #121214; width: 30px;'></td>";
-                } else {
-                    echo "<td style='background-color: #1e1b4b; color: #818cf8; padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
-                }
-            }
+            echo "<table border='0' cellpadding='0' cellspacing='0' style='font-family: Calibri, Arial, sans-serif; border-collapse: collapse; background-color: #ffffff;'>";
+
+            // Anchos de columna fijos
+            echo "<colgroup>";
+            echo "<col style='width:320px'>";  // Nombre
+            echo "<col style='width:150px'>";  // Estado
+            echo "</colgroup>";
+
+            // ── Título de ancho completo ──
+            echo "<tr><td colspan='2' style='background-color: #4f46e5; color: #ffffff; font-size: 22px; font-weight: bold; padding: 20px 22px 4px; border: none;'>Fundación Don Benjamín</td></tr>";
+            echo "<tr><td colspan='2' style='background-color: #4f46e5; color: #e0e7ff; font-size: 14px; padding: 0 22px 18px; border: none;'>Reporte de asistencias &middot; Generado el ".now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm')."</td></tr>";
+
+            // Fila de respiro
+            echo "<tr><td colspan='2' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+
+            // ── Resumen de totales ──
+            $totalRegistros = $totalPresentes + $totalAusentes;
+            $pct = $totalRegistros > 0 ? round(($totalPresentes / $totalRegistros) * 100) : 0;
+
+            echo "<tr>";
+            echo "<td style='background-color: #ecfdf5; color: #059669; padding: 12px 16px; font-size: 13.5px; font-weight: bold; border: 1px solid #d1fae5;'>Total presentes: {$totalPresentes}</td>";
+            echo "<td style='background-color: #fef2f2; color: #dc2626; padding: 12px 16px; font-size: 13.5px; font-weight: bold; border: 1px solid #fecaca;'>Ausentes: {$totalAusentes}</td>";
             echo "</tr>";
-            
-            // Celdas de datos con fondo oscuro e inmunidad ante cambios de tema
-            foreach ($filas as $fila) {
+            echo "<tr>";
+            echo "<td colspan='2' style='background-color: #eef2ff; color: #3730a3; padding: 10px 16px; font-size: 12.5px; font-weight: bold; border: 1px solid #c7d2fe;'>{$totalRegistros} registros en total &middot; {$pct}% de asistencia</td>";
+            echo "</tr>";
+
+            // Fila de respiro
+            echo "<tr><td colspan='2' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+
+            // ── Encabezado de columnas de personas ──
+            echo "<tr>";
+            echo "<td style='background-color: #eef2ff; color: #3730a3; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid #c7d2fe;'>Nombre</td>";
+            echo "<td style='background-color: #eef2ff; color: #3730a3; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: bold; text-transform: uppercase; border: 1px solid #c7d2fe;'>Estado</td>";
+            echo "</tr>";
+
+            // ── Grupos por fecha ──
+            $rowIndex = 0;
+            foreach ($grupos as $grupo) {
+                $fechaTexto = $grupo['fecha']
+                    ? ucfirst($grupo['fecha']->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY'))
+                    : 'Sin fecha';
+
+                // Encabezado divisorio de fecha
                 echo "<tr>";
-                foreach ($fila as $index => $celda) {
-                    if ($index < 5) {
-                        $styleCelda = "padding: 8px 12px; color: #e4e4e7; background-color: #18181a; font-size: 13.5px;";
-                        
-                        if ($index === 4) {
-                            if ($celda === 'Presente') {
-                                $styleCelda .= " color: #34d399; background-color: rgba(52, 211, 153, 0.1); font-weight: bold;";
-                            } elseif ($celda === 'Ausente') {
-                                $styleCelda .= " color: #f87171; background-color: rgba(248, 113, 113, 0.1); font-weight: bold;";
-                            }
-                        }
-                        echo "<td style='{$styleCelda}'>".htmlspecialchars((string)$celda)."</td>";
-                    } elseif ($index == 5) {
-                        echo "<td style='border: none; background-color: #121214;'></td>";
-                    } else {
-                        $styleTotales = "padding: 8px 12px; font-size: 13.5px; background-color: #1c1917; font-weight: bold;";
-                        if (strpos((string)$fila[6], 'Presentes') !== false) {
-                            $styleTotales .= " color: #34d399;";
-                        } elseif (strpos((string)$fila[6], 'Ausentes') !== false) {
-                            $styleTotales .= " color: #f87171;";
-                        } else {
-                            $styleTotales .= " color: #a1a1aa;";
-                        }
-                        echo "<td style='{$styleTotales}'>".htmlspecialchars((string)$celda)."</td>";
-                    }
-                }
+                echo "<td colspan='2' style='background-color: #6366f1; color: #ffffff; padding: 10px 16px; font-size: 13px; font-weight: bold; border: 1px solid #4f46e5;'>{$fechaTexto}</td>";
                 echo "</tr>";
+
+                foreach ($grupo['personas'] as $persona) {
+                    [$nombre, $estado] = $persona;
+                    $bgAlt = $rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                    $styleNombre = "padding: 12px 16px; color: #1f2937; background-color: {$bgAlt}; font-size: 13.5px; border: 1px solid #e5e7eb;";
+
+                    if ($estado === 'Presente') {
+                        $styleEstado = "padding: 12px 16px; font-size: 13.5px; font-weight: bold; border: 1px solid #e5e7eb; color: #059669; background-color: #ecfdf5;";
+                    } else {
+                        $styleEstado = "padding: 12px 16px; font-size: 13.5px; font-weight: bold; border: 1px solid #e5e7eb; color: #dc2626; background-color: #fef2f2;";
+                    }
+
+                    echo "<tr>";
+                    echo "<td style='{$styleNombre}'>".htmlspecialchars((string)$nombre)."</td>";
+                    echo "<td style='{$styleEstado}'>".htmlspecialchars((string)$estado)."</td>";
+                    echo "</tr>";
+
+                    $rowIndex++;
+                }
             }
-            
+
             echo "</table>";
         }, $filename, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
@@ -227,7 +247,8 @@ class ExportController extends Controller
     }
 
     /**
-     * Renderiza los beneficiarios manteniendo la consistencia visual oscura
+     * Renderiza los beneficiarios en un Excel claro, limpio y con la
+     * paleta de marca (índigo) usada en el resto del sistema
      */
     private function excelNativo(array $columnas, array $filas, string $slug): StreamedResponse
     {
@@ -235,33 +256,41 @@ class ExportController extends Controller
 
         return response()->streamDownload(function () use ($columnas, $filas) {
             echo "<meta charset='utf-8'>";
-            echo "<table border='1' style='font-family: Arial, sans-serif; border-collapse: collapse; background-color: #121214; border-color: #2e2e33;'>";
-            
-            // Encabezado
-            echo "<tr style='background-color: #1a1a1e; font-weight: bold;'>";
+            echo "<table border='0' cellpadding='0' cellspacing='0' style='font-family: Calibri, Arial, sans-serif; border-collapse: collapse; background-color: #ffffff;'>";
+
+            // ── Título ──
+            $totalCols = count($columnas);
+            echo "<tr><td colspan='{$totalCols}' style='background-color: #4f46e5; color: #ffffff; font-size: 15px; font-weight: bold; padding: 12px 14px; border: none;'>Fundación Don Benjamín</td></tr>";
+            echo "<tr><td colspan='{$totalCols}' style='background-color: #eef2ff; color: #4338ca; font-size: 11.5px; font-weight: bold; padding: 6px 14px; border: none;'>Reporte de beneficiarios &middot; Generado el ".now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm')."</td></tr>";
+            echo "<tr><td colspan='{$totalCols}' style='border: none; background-color: #ffffff; padding: 6px;'></td></tr>";
+
+            // ── Encabezado ──
+            echo "<tr>";
             foreach ($columnas as $col) {
-                echo "<td style='padding: 8px 12px; color: #a1a1aa; text-align: left; font-size: 12px; text-transform: uppercase;'>".htmlspecialchars($col)."</td>";
+                echo "<td style='background-color: #eef2ff; color: #3730a3; padding: 9px 12px; text-align: left; font-size: 11px; font-weight: bold; text-transform: uppercase; border: 1px solid #c7d2fe;'>".htmlspecialchars($col)."</td>";
             }
             echo "</tr>";
-            
-            // Filas estables
-            foreach ($filas as $fila) {
+
+            // ── Filas de datos ──
+            foreach ($filas as $rowIndex => $fila) {
+                $bgAlt = $rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb';
                 echo "<tr>";
                 foreach ($fila as $index => $celda) {
-                    $styleCelda = "padding: 8px 12px; color: #e4e4e7; background-color: #18181a; font-size: 13.5px;";
-                    // Conserva tus etiquetas de Estado (Activo / Inactivo) con colores armoniosos
+                    $styleCelda = "padding: 8px 12px; color: #1f2937; background-color: {$bgAlt}; font-size: 12px; border: 1px solid #e5e7eb;";
+
+                    // Conserva tus etiquetas de Estado (Activo / Inactivo) con colores suaves
                     if ($index === 7) {
                         if ($celda === 'Activo') {
-                            $styleCelda .= " color: #34d399; font-weight: bold;";
+                            $styleCelda = "padding: 8px 12px; font-size: 12px; font-weight: bold; border: 1px solid #e5e7eb; color: #059669; background-color: #ecfdf5;";
                         } else {
-                            $styleCelda .= " color: #ef4444; font-weight: bold;";
+                            $styleCelda = "padding: 8px 12px; font-size: 12px; font-weight: bold; border: 1px solid #e5e7eb; color: #dc2626; background-color: #fef2f2;";
                         }
                     }
                     echo "<td style='{$styleCelda}'>".htmlspecialchars((string)$celda)."</td>";
                 }
                 echo "</tr>";
             }
-            
+
             echo "</table>";
         }, $filename, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',

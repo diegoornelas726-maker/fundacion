@@ -6,23 +6,39 @@
     <style>
         /* ── Bienvenida ── */
         .welcome-card {
-            background: rgba(18,18,20,0.8);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 16px;
+            position: relative;
+            background: rgba(255,255,255,0.055);
+            border: var(--glass-border, 1px solid rgba(255,255,255,0.14));
+            border-radius: var(--glass-radius-lg, 28px);
             padding: 28px 32px;
             display: flex;
             align-items: center;
             gap: 16px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(var(--glass-blur, 30px)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur, 30px)) saturate(180%);
+            box-shadow: var(--glass-shadow, 0 8px 32px rgba(0,0,0,0.3));
+            overflow: hidden;
             animation: fadeSlideUp 0.5s ease both;
         }
 
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: var(--glass-sheen, linear-gradient(128deg, rgba(255,255,255,0.18), rgba(255,255,255,0) 36%));
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .welcome-card > * { position: relative; z-index: 1; }
+
         .welcome-icon {
             width: 48px; height: 48px;
-            border-radius: 12px;
-            background: rgba(99,102,241,0.12);
-            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 16px;
+            background: rgba(99,102,241,0.14);
+            border: 1px solid rgba(99,102,241,0.25);
+            backdrop-filter: blur(8px);
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
@@ -55,16 +71,18 @@
 
         /* ── Tarjeta de estadística ── */
         .stat-card {
-            background: rgba(18,18,20,0.8);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 16px;
+            background: rgba(255,255,255,0.05);
+            border: var(--glass-border, 1px solid rgba(255,255,255,0.14));
+            border-radius: var(--glass-radius-lg, 28px);
             padding: 24px 26px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(var(--glass-blur, 30px)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--glass-blur, 30px)) saturate(180%);
+            box-shadow: var(--glass-shadow, 0 8px 32px rgba(0,0,0,0.3));
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s, background 0.25s;
             opacity: 0;
             animation: fadeSlideUp 0.5s ease forwards;
             cursor: default;
+            overflow: hidden;
         }
 
         .stats-grid { perspective: 1000px; }
@@ -75,15 +93,27 @@
             will-change: transform;
         }
 
+        /* Brillo especular fijo, tipo vidrio */
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: var(--glass-sheen, linear-gradient(128deg, rgba(255,255,255,0.18), rgba(255,255,255,0) 36%));
+            opacity: 0.75;
+            pointer-events: none;
+            z-index: 0;
+        }
+
         /* Brillo que sigue al cursor */
         .stat-card::before {
             content: '';
             position: absolute;
             inset: 0;
-            border-radius: 16px;
+            border-radius: inherit;
             pointer-events: none;
-            background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 50%),
-                        rgba(99,102,241,0.16), transparent 45%);
+            background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%),
+                        rgba(99,102,241,0.22), transparent 45%);
             opacity: 0;
             transition: opacity 0.25s ease;
             z-index: 0;
@@ -93,9 +123,10 @@
         .stat-card > * { position: relative; z-index: 1; }
 
         .stat-card:hover {
-            border-color: rgba(99,102,241,0.25);
-            transform: translateY(-3px);
-            box-shadow: 0 14px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.35);
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px rgba(99,102,241,0.15);
         }
 
         .stat-card:nth-child(1) { animation-delay: 0.1s; }
@@ -125,8 +156,9 @@
 
         .stat-icon {
             width: 36px; height: 36px;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(6px);
         }
 
         .stat-icon svg { width: 18px; height: 18px; }

@@ -51,7 +51,7 @@ class ActividadController extends Controller
     }
 
     /**
-     * EXPORTAR ACTIVIDADES A EXCEL/CSV O PDF CON FILTROS APLICADOS
+     * EXPORTAR ACTIVIDADES A EXCEL (con estilo) O PDF CON FILTROS APLICADOS
      */
     public function export(Request $request)
     {
@@ -101,40 +101,95 @@ class ActividadController extends Controller
             return $pdf->download("reporte_actividades_" . date('Ymd_His') . ".pdf");
         }
 
-        // GENERACIÓN POR DEFECTO EN CASO DE EXCEL / CSV
-        $filename = "actividades_reporte_" . date('Ymd_His') . ".csv";
-        
-        $headers = [
-            "Content-type"        => "text/csv; charset=UTF-8",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
+        // GENERACIÓN POR DEFECTO: EXCEL CON ESTILO (banner de marca, encabezados índigo, estado en color)
+        return $this->excelActividades($actividades, $request);
+    }
 
-        $callback = function() use($actividades) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+    /**
+     * Renderiza las actividades en un Excel claro, limpio y con la
+     * paleta de marca (índigo) usada en el resto del sistema
+     */
+    private function excelActividades($actividades, Request $request)
+    {
+        $filename = "actividades_reporte_" . date('Ymd_His') . ".xls";
 
-            fputcsv($file, ['#', 'Título', 'Tipo', 'Responsable', 'Lugar', 'Fecha Inicio', 'Fecha Fin', 'Participantes', 'Estado']);
+        $periodoTexto = $request->filled('periodo')
+            ? date('m/Y', strtotime($request->periodo))
+            : date('m/Y');
 
-            foreach ($actividades as $act) {
-                fputcsv($file, [
-                    $act->id,
-                    $act->titulo,
-                    $act->tipo ?? '—',
-                    $act->responsable ?? '—',
-                    $act->lugar ?? '—',
-                    $act->fecha_inicio ? date('d/m/Y', strtotime($act->fecha_inicio)) : '—',
-                    $act->fecha_fin ? date('d/m/Y', strtotime($act->fecha_fin)) : '—',
-                    $act->participantes_esperados ?? '—',
-                    $act->estado
-                ]);
+        return response()->streamDownload(function () use ($actividades, $periodoTexto) {
+            echo "<meta charset='utf-8'>";
+            echo "<table border='0' cellpadding='0' cellspacing='0' style='font-family: Calibri, Arial, sans-serif; border-collapse: collapse; background-color: #ffffff;'>";
+
+            // Anchos de columna fijos
+            echo "<colgroup>";
+            echo "<col style='width:50px'>";   // #
+            echo "<col style='width:240px'>";  // Título
+            echo "<col style='width:140px'>";  // Tipo
+            echo "<col style='width:170px'>";  // Responsable
+            echo "<col style='width:190px'>";  // Lugar
+            echo "<col style='width:120px'>";  // Fecha Inicio
+            echo "<col style='width:120px'>";  // Fecha Fin
+            echo "<col style='width:130px'>";  // Participantes
+            echo "<col style='width:130px'>";  // Estado
+            echo "</colgroup>";
+
+            // ── Título de ancho completo ──
+            echo "<tr><td colspan='9' style='background-color: #4f46e5; color: #ffffff; font-size: 22px; font-weight: bold; padding: 20px 22px 4px; border: none;'>Fundación Don Benjamín</td></tr>";
+            echo "<tr><td colspan='9' style='background-color: #4f46e5; color: #e0e7ff; font-size: 14px; padding: 0 22px 18px; border: none;'>Reporte de actividades &middot; Periodo: {$periodoTexto} &middot; Generado el ".now()->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm')."</td></tr>";
+
+            // Filas de respiro
+            echo "<tr><td colspan='9' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+            echo "<tr><td colspan='9' style='border: none; background-color: #ffffff; padding: 10px; font-size: 6px; line-height: 6px;'>&nbsp;</td></tr>";
+
+            // ── Encabezados ──
+            echo "<tr>";
+            foreach (['#', 'Título', 'Tipo', 'Responsable', 'Lugar', 'Fecha Inicio', 'Fecha Fin', 'Participantes', 'Estado'] as $col) {
+                echo "<td style='background-color: #eef2ff; color: #3730a3; padding: 14px 16px; text-align: left; font-size: 13.5px; font-weight: bold; text-transform: uppercase; border: 1px solid #c7d2fe;'>".htmlspecialchars($col)."</td>";
             }
-            fclose($file);
-        };
+            echo "</tr>";
 
-        return response()->stream($callback, 200, $headers);
+            // ── Filas de datos ──
+            foreach ($actividades as $rowIndex => $act) {
+                $bgAlt = $rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                switch ($act->estado) {
+                    case 'Programada':
+                        $colorEstado = 'color: #2563eb; background-color: #eff6ff;';
+                        break;
+                    case 'En curso':
+                        $colorEstado = 'color: #b45309; background-color: #fffbeb;';
+                        break;
+                    case 'Finalizada':
+                        $colorEstado = 'color: #059669; background-color: #ecfdf5;';
+                        break;
+                    case 'Cancelada':
+                        $colorEstado = 'color: #dc2626; background-color: #fef2f2;';
+                        break;
+                    default:
+                        $colorEstado = 'color: #374151; background-color: '.$bgAlt.';';
+                }
+
+                $celdaBase = "padding: 13px 16px; color: #1f2937; background-color: {$bgAlt}; font-size: 14px; border: 1px solid #e5e7eb;";
+
+                echo "<tr>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->id)."</td>";
+                echo "<td style='{$celdaBase} font-weight: bold;'>".htmlspecialchars($act->titulo)."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->tipo ?? '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->responsable ?? '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->lugar ?? '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->fecha_inicio ? date('d/m/Y', strtotime($act->fecha_inicio)) : '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->fecha_fin ? date('d/m/Y', strtotime($act->fecha_fin)) : '—')."</td>";
+                echo "<td style='{$celdaBase}'>".htmlspecialchars($act->participantes_esperados ?? '—')."</td>";
+                echo "<td style='padding: 13px 16px; font-size: 14px; font-weight: bold; border: 1px solid #e5e7eb; {$colorEstado}'>".htmlspecialchars($act->estado)."</td>";
+                echo "</tr>";
+            }
+
+            echo "</table>";
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function create()
