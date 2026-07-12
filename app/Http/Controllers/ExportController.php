@@ -47,7 +47,7 @@ class ExportController extends Controller
 
         $rows = $query->orderBy('apellido_paterno')->get();
 
-        if ($request->input('format') === 'pdf') {
+        if ($request->input('formato') === 'pdf') {
             return $this->pdf($rows, 'beneficiarios.pdf', 'beneficiarios_reporte', $periodo);
         }
 
