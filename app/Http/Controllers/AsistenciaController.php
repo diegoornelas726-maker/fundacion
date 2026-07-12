@@ -81,7 +81,7 @@ class AsistenciaController extends Controller
      */
     public function historial(Request $request)
     {
-        $query = Asistencia::selectRaw('fecha, COUNT(CASE WHEN presente = 1 THEN 1 END) as presentes, COUNT(*) as total')
+        $query = Asistencia::selectRaw('fecha, COUNT(CASE WHEN presente = true THEN 1 END) as presentes, COUNT(*) as total')
             ->groupBy('fecha');
 
         // CORRECCIÓN: Filtros independientes de Mes (YYYY-MM) y Día (DD)
