@@ -18,6 +18,8 @@
             gap: 8px;
             flex-wrap: wrap;
             align-items: center;
+            flex: 1 1 420px;
+            min-width: 0;
         }
 
         .search-input, .filter-select, .period-input {
@@ -33,7 +35,7 @@
             transition: border-color 0.18s;
         }
 
-        .search-input { min-width: 240px; }
+        .search-input { flex: 1 1 170px; min-width: 140px; }
         .search-input::placeholder { color: #3f3f46; }
         .search-input:focus, .filter-select:focus, .period-input:focus {
             border-color: rgba(99,102,241,0.5);
@@ -327,7 +329,7 @@
             </button>
         </form>
 
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <div style="display:flex; gap:12px; flex-wrap:nowrap; align-items:center; flex-shrink:0;">
             <form action="{{ route('beneficiarios.export') }}" method="GET" style="display:flex; gap:8px; align-items:center; margin:0;">
                 <input type="hidden" name="buscar" value="{{ request('buscar') }}">
                 <input type="hidden" name="estado" value="{{ request('estado') }}">
