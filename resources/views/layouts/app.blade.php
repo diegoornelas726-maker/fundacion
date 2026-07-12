@@ -593,6 +593,57 @@
         }
         [data-theme="light"] .btn-cancel:hover { background: rgba(0,0,0,0.07); color: #18181b; }
         [data-theme="light"] .form-actions { border-top-color: rgba(0,0,0,0.07); }
+
+        /* ════════════════════════════════════════════
+           RESPONSIVE · MENÚ MÓVIL
+           ════════════════════════════════════════════ */
+        .nav-mobile-toggle {
+            display: none;
+            width: 38px;
+            height: 38px;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--glass-radius-sm);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #a1a1aa;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .nav-mobile-toggle svg { width: 20px; height: 20px; }
+        [data-theme="light"] .nav-mobile-toggle {
+            background: rgba(255,255,255,0.45);
+            border-color: rgba(255,255,255,0.75);
+            color: #52525b;
+        }
+
+        .nav-mobile-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 4px 16px 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .nav-mobile-menu.open { display: flex; }
+        .nav-mobile-menu .nav-link { width: 100%; padding: 11px 14px; }
+
+        @media (max-width: 860px) {
+            .nav-links { display: none; }
+            .nav-mobile-toggle { display: flex; }
+            .nav-user-name { display: none; }
+            .navbar-inner { padding: 0 14px; gap: 8px; }
+            .nav-logo-text {
+                max-width: 130px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 12.5px;
+            }
+            .nav-user-btn { padding: 6px; }
+            .page-header-inner { padding: 16px; }
+            .page-content { padding: 20px 14px; }
+        }
     </style>
 </head>
 <body>
@@ -655,9 +706,18 @@
                     <div class="nav-user-avatar">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </div>
-                    {{ Auth::user()->name }}
+                    <span class="nav-user-name">{{ Auth::user()->name }}</span>
                     <svg class="chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                    </svg>
+                </button>
+
+                <button class="nav-mobile-toggle" id="nav-mobile-toggle" onclick="toggleMobileMenu()" aria-label="Abrir menú">
+                    <svg id="mobile-icon-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                    </svg>
+                    <svg id="mobile-icon-close" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
                     </svg>
                 </button>
 
@@ -685,6 +745,29 @@
                     </form>
                 </div>
             </div>
+        </div>
+
+        <div class="nav-mobile-menu" id="nav-mobile-menu">
+            <a href="{{ route('dashboard') }}"
+               class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                Dashboard
+            </a>
+            <a href="{{ route('beneficiarios.index') }}"
+               class="nav-link {{ request()->routeIs('beneficiarios.*') ? 'active' : '' }}">
+                Beneficiarios
+            </a>
+            <a href="{{ route('apoyos.index') }}"
+               class="nav-link {{ request()->routeIs('apoyos.*') ? 'active' : '' }}">
+                Apoyos
+            </a>
+            <a href="{{ route('actividades.index') }}"
+               class="nav-link {{ request()->routeIs('actividades.*') ? 'active' : '' }}">
+                Actividades
+            </a>
+            <a href="{{ route('asistencia.index') }}"
+               class="nav-link {{ request()->routeIs('asistencia.*') ? 'active' : '' }}">
+                Asistencia
+            </a>
         </div>
     </nav>
 
@@ -725,6 +808,28 @@
             btn.classList.toggle('open');
             menu.classList.toggle('open');
         }
+
+        // Menú móvil (hamburguesa)
+        function toggleMobileMenu() {
+            const menu = document.getElementById('nav-mobile-menu');
+            const iconOpen = document.getElementById('mobile-icon-open');
+            const iconClose = document.getElementById('mobile-icon-close');
+            const isOpen = menu.classList.toggle('open');
+            iconOpen.style.display = isOpen ? 'none' : 'block';
+            iconClose.style.display = isOpen ? 'block' : 'none';
+        }
+
+        // Cierra el menú móvil si la pantalla vuelve a ser ancha
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 860) {
+                const menu = document.getElementById('nav-mobile-menu');
+                const iconOpen = document.getElementById('mobile-icon-open');
+                const iconClose = document.getElementById('mobile-icon-close');
+                menu.classList.remove('open');
+                iconOpen.style.display = 'block';
+                iconClose.style.display = 'none';
+            }
+        });
 
         document.addEventListener('click', function(e) {
             const btn  = document.getElementById('user-menu-btn');
